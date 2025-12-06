@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #define PORT 8005
-#define IP "192.168.0.104"
+#define IP "192.168.1.11"
 
 int main(){
     const int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -28,6 +28,21 @@ int main(){
 
     std::cout << "Client-ul s-a conectat!\n";
 
+    while (1) {
+        std::string cmd;
+        std::getline(std::cin, cmd);
+
+        send(sock, cmd.c_str(), cmd.length(), 0);
+
+        char buffer[1024];
+        int from_sv = recv(sock, buffer, 1023, 0);
+        if (from_sv == 0) {
+            std::cout << "Server shut down. Exitting client...\n";
+
+            close(sock);
+            return 0;
+        }
+    }
     close(sock);
     return 0;
 }
