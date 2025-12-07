@@ -1,8 +1,0 @@
-/home/iemi/retele/cpp-personal-cloud/build/Desktop_Qt_6_10_1-Debug/CMakeFiles/server_exec.dir
-/home/iemi/retele/cpp-personal-cloud/build/Desktop_Qt_6_10_1-Debug/CMakeFiles/client_exec.dir
-/home/iemi/retele/cpp-personal-cloud/build/Desktop_Qt_6_10_1-Debug/CMakeFiles/edit_cache.dir
-/home/iemi/retele/cpp-personal-cloud/build/Desktop_Qt_6_10_1-Debug/CMakeFiles/rebuild_cache.dir
-/home/iemi/retele/cpp-personal-cloud/build/Desktop_Qt_6_10_1-Debug/CMakeFiles/server_exec_autogen_timestamp_deps.dir
-/home/iemi/retele/cpp-personal-cloud/build/Desktop_Qt_6_10_1-Debug/CMakeFiles/server_exec_autogen.dir
-/home/iemi/retele/cpp-personal-cloud/build/Desktop_Qt_6_10_1-Debug/CMakeFiles/client_exec_autogen_timestamp_deps.dir
-/home/iemi/retele/cpp-personal-cloud/build/Desktop_Qt_6_10_1-Debug/CMakeFiles/client_exec_autogen.dir
