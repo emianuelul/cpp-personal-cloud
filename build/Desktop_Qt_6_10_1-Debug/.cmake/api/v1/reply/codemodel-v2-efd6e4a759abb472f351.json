@@ -1,0 +1,105 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "cpp_personal_cloud",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "client_exec::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-client_exec-Debug-2b983c7152b3486389cf.json",
+					"name" : "client_exec",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "client_exec_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-client_exec_autogen-Debug-dfc7dc306a3e65d37078.json",
+					"name" : "client_exec_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "client_exec_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-client_exec_autogen_timestamp_deps-Debug-86a7eba29b38853acedf.json",
+					"name" : "client_exec_autogen_timestamp_deps",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "server_exec::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-server_exec-Debug-4c8576ff50ab947e2336.json",
+					"name" : "server_exec",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "server_exec_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-server_exec_autogen-Debug-3e5c72def02e3af2f4e8.json",
+					"name" : "server_exec_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "server_exec_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-server_exec_autogen_timestamp_deps-Debug-beff43ead855bbcac4cf.json",
+					"name" : "server_exec_autogen_timestamp_deps",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/iemi/retele/cpp-personal-cloud/build/Desktop_Qt_6_10_1-Debug",
+		"source" : "/home/iemi/retele/cpp-personal-cloud"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

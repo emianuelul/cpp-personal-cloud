@@ -18,7 +18,7 @@ private:
     void processClientCommands() {
         while (true) {
             char buffer[BUFFER_SIZE] = {0};
-            int received = recv(fd, buffer, BUFFER_SIZE-1, 0);
+            int received = recv(fd, buffer, BUFFER_SIZE - 1, 0);
 
             if (received > 0) {
                 buffer[BUFFER_SIZE] = '\0';
@@ -27,27 +27,35 @@ private:
                 cmd = trimString(cmd);
                 std::cout << "Received command: " << cmd << "\n";
 
+                bool succ = false;
                 try {
                     std::unique_ptr<Command> command = CommandFactory::createCommand(cmd);
                     ServerResponse resp = command->execute();
                     std::cout << "SUCCESS: " << resp.status_message << '\n';
-                } catch (const char * err) {
+                    succ = true;
+                } catch (const char *err) {
                     std::cerr << "COMANDA EROARE: " << err << "\n";
-                } catch (const std::exception& e) {
+                } catch (const std::exception &e) {
                     std::cerr << "EROARE SISTEM: " << e.what() << "\n";
                 } catch (...) {
                     std::cerr << "EROARE NECUNOSCUTĂ! Curatare si Oprire.\n";
                 }
 
-                std::string msgBack = "ACK";
+                std::string msgBack = "FAIL";
+                if (succ) {
+                    msgBack = "SUCC";
+                }
+
                 send(fd, msgBack.c_str(), msgBack.length(), 0);
             } else if (received == 0) {
                 break;
             }
         }
     }
+
 public:
-    explicit ClientWorker(int socketFd) : fd(socketFd){};
+    explicit ClientWorker(int socketFd) : fd(socketFd) {
+    };
 
     void run() {
         std::cout << "Thread [" << std::this_thread::get_id() << "] a preluat clientul FD: " << fd << '\n';
