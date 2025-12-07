@@ -18,35 +18,39 @@ private:
     void processClientCommands() {
         while (true) {
             char buffer[BUFFER_SIZE] = {0};
-            int received = recv(fd, buffer, BUFFER_SIZE - 1, 0);
+            int size;
+            int received = recv(fd, &size, sizeof(int), 0);
 
             if (received > 0) {
-                buffer[BUFFER_SIZE] = '\0';
-                std::string cmd = buffer;
+                received = recv(fd, buffer, size, 0);
+                if (received > 0) {
+                    buffer[size + 1] = '\0';
+                    std::string cmd = buffer;
 
-                cmd = trimString(cmd);
-                std::cout << "Received command: " << cmd << "\n";
+                    cmd = trimString(cmd);
+                    std::cout << "Received command: " << cmd << "\n";
 
-                bool succ = false;
-                try {
-                    std::unique_ptr<Command> command = CommandFactory::createCommand(cmd);
-                    ServerResponse resp = command->execute();
-                    std::cout << "SUCCESS: " << resp.status_message << '\n';
-                    succ = true;
-                } catch (const char *err) {
-                    std::cerr << "COMANDA EROARE: " << err << "\n";
-                } catch (const std::exception &e) {
-                    std::cerr << "EROARE SISTEM: " << e.what() << "\n";
-                } catch (...) {
-                    std::cerr << "EROARE NECUNOSCUTĂ! Curatare si Oprire.\n";
+                    bool succ = false;
+                    try {
+                        std::unique_ptr<Command> command = CommandFactory::createCommand(cmd);
+                        ServerResponse resp = command->execute();
+                        std::cout << "SUCCESS: " << resp.status_message << '\n';
+                        succ = true;
+                    } catch (const char *err) {
+                        std::cerr << "COMANDA EROARE: " << err << "\n";
+                    } catch (const std::exception &e) {
+                        std::cerr << "EROARE SISTEM: " << e.what() << "\n";
+                    } catch (...) {
+                        std::cerr << "EROARE NECUNOSCUTĂ! Curatare si Oprire.\n";
+                    }
+
+                    std::string msgBack = "FAIL";
+                    if (succ) {
+                        msgBack = "SUCC";
+                    }
+
+                    send(fd, msgBack.c_str(), msgBack.length(), 0);
                 }
-
-                std::string msgBack = "FAIL";
-                if (succ) {
-                    msgBack = "SUCC";
-                }
-
-                send(fd, msgBack.c_str(), msgBack.length(), 0);
             } else if (received == 0) {
                 break;
             }

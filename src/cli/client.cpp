@@ -19,6 +19,16 @@
 int sock;
 bool isConnected = false;
 
+void sendToServer(std::string msg) {
+    int len = msg.length();
+    ssize_t sent = send(sock, &len, sizeof(int), 0);
+    if (sent < 0) {
+        std::cout << "Eroare la send\n";
+    }
+
+    sent = send(sock, msg.c_str(), msg.length(), 0);
+}
+
 bool commandStatus() {
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
@@ -73,11 +83,7 @@ bool sendLoginCommand(std::string user, std::string passwd) {
 
     std::string cmd = "LOGIN " + user + " " + passwd;
 
-    ssize_t sent = send(sock, cmd.c_str(), cmd.length(), 0);
-    if (sent < 0) {
-        std::cout << "Eroare la send\n";
-        return false;
-    }
+    sendToServer(cmd);
 
     std::cout << "Trimis: " << cmd << '\n';
 
@@ -85,29 +91,21 @@ bool sendLoginCommand(std::string user, std::string passwd) {
 }
 
 bool sendGetRequest(std::string file) {
-    std::string msg = "GET " + file;
+    std::string cmd = "GET " + file;
 
-    ssize_t sent = send(sock, msg.c_str(), msg.length(), 0);
-    if (sent < 0) {
-        std::cout << "Eroare la send\n";
-        return false;
-    }
+    sendToServer(cmd);
 
-    std::cout << "Trimis la server: " << msg << '\n';
+    std::cout << "Trimis la server: " << cmd << '\n';
 
     return commandStatus();
 }
 
 bool sendPostRequest(std::string file) {
-    std::string msg = "POST " + file;
+    std::string cmd = "POST " + file;
 
-    ssize_t sent = send(sock, msg.c_str(), msg.length(), 0);
-    if (sent < 0) {
-        std::cout << "Eroare la send\n";
-        return false;
-    }
+    sendToServer(cmd);
 
-    std::cout << "Trimis la server: " << msg << '\n';
+    std::cout << "Trimis la server: " << cmd << '\n';
 
     return commandStatus();
 }
