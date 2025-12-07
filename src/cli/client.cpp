@@ -32,24 +32,27 @@ void sendToServer(std::string msg) {
 bool commandStatus() {
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
-    ssize_t received = recv(sock, buffer, BUFFER_SIZE - 1, 0);
+    int size;
+    ssize_t received = recv(sock, &size, sizeof(int), 0);
 
-    if (received > 0) {
-        buffer[received] = '\0';
-        std::cout << "Răspuns de la server: " << buffer << "\n";
-    } else if (received == 0) {
-        std::cout << "Serverul s-a deconectat\n";
-        isConnected = false;
-    } else {
-        std::cout << "Eroare la primire\n";
+    if (received < 0) {
+        std::cout << "Eroare la primirea dimensiunii!\n";
+        return false;
     }
+
+    received = recv(sock, buffer, size, 0);
+
+    if (received != size) {
+        std::cout << "Eroare: primit " << received << " bytes si asteptam " << size << "\n";
+        return false;
+    }
+
+    buffer[size] = '\0';
+
+    std::cout << "De la server: " << buffer << '\n';
 
     std::string resp = buffer;
-    if (resp == "SUCC") {
-        return true;
-    }
-
-    return false;
+    return (resp == "SUCC");
 }
 
 void initConnection() {

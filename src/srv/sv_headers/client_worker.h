@@ -21,37 +21,51 @@ private:
             int size;
             int received = recv(fd, &size, sizeof(int), 0);
 
-            if (received > 0) {
-                received = recv(fd, buffer, size, 0);
-                if (received > 0) {
-                    buffer[size + 1] = '\0';
-                    std::string cmd = buffer;
-
-                    cmd = trimString(cmd);
-                    std::cout << "Received command: " << cmd << "\n";
-
-                    bool succ = false;
-                    try {
-                        std::unique_ptr<Command> command = CommandFactory::createCommand(cmd);
-                        ServerResponse resp = command->execute();
-                        std::cout << "SUCCESS: " << resp.status_message << '\n';
-                        succ = true;
-                    } catch (const char *err) {
-                        std::cerr << "COMANDA EROARE: " << err << "\n";
-                    } catch (const std::exception &e) {
-                        std::cerr << "EROARE SISTEM: " << e.what() << "\n";
-                    } catch (...) {
-                        std::cerr << "EROARE NECUNOSCUTĂ! Curatare si Oprire.\n";
-                    }
-
+            if (received == sizeof(int)) {
+                if (size <= 0 || size >= BUFFER_SIZE) {
+                    std::cerr << "Dimensiune invalidă primită: " << size << "\n";
                     std::string msgBack = "FAIL";
-                    if (succ) {
-                        msgBack = "SUCC";
-                    }
 
+                    int msgSize = msgBack.length();
+                    send(fd, &msgSize, sizeof(int), 0);
                     send(fd, msgBack.c_str(), msgBack.length(), 0);
+                } else {
+                    received = recv(fd, buffer, size, 0);
+                    if (received == size) {
+                        buffer[size] = '\0';
+                        std::string cmd = buffer;
+
+                        cmd = trimString(cmd);
+                        std::cout << "Received command: " << cmd << "\n";
+
+                        bool succ = false;
+                        try {
+                            std::unique_ptr<Command> command = CommandFactory::createCommand(cmd);
+                            ServerResponse resp = command->execute();
+                            std::cout << "SUCCESS: " << resp.status_message << '\n';
+                            succ = true;
+                        } catch (const char *err) {
+                            std::cerr << "COMANDA EROARE: " << err << "\n";
+                        } catch (const std::exception &e) {
+                            std::cerr << "EROARE SISTEM: " << e.what() << "\n";
+                        } catch (...) {
+                            std::cerr << "EROARE NECUNOSCUTĂ! Curatare si Oprire.\n";
+                        }
+
+                        std::string msgBack = succ ? "SUCC" : "FAIL";
+
+                        int msgSize = msgBack.length();
+                        send(fd, &msgSize, sizeof(int), 0);
+                        send(fd, msgBack.c_str(), msgBack.length(), 0);
+                    } else {
+                        std::cerr << "Eroare la primire mesaj: așteptat " << size << ", primit " << received << "\n";
+                    }
                 }
             } else if (received == 0) {
+                std::cout << "Client deconectat\n";
+                break;
+            } else {
+                std::cerr << "Eroare la primire dimensiune\n";
                 break;
             }
         }
