@@ -13,7 +13,7 @@
 
 
 #define PORT 8005
-#define IP "192.168.1.11"
+#define IP "10.100.0.30"
 #define BUFFER_SIZE 2048
 
 int sock;
@@ -25,8 +25,9 @@ void sendToServer(std::string msg) {
     if (sent < 0) {
         std::cout << "Eroare la send\n";
     }
-
     sent = send(sock, msg.c_str(), msg.length(), 0);
+
+    std::cout << "Trimis la server: " << msg << '\n';
 }
 
 bool commandStatus() {
@@ -88,7 +89,6 @@ bool sendLoginCommand(std::string user, std::string passwd) {
 
     sendToServer(cmd);
 
-    std::cout << "Trimis: " << cmd << '\n';
 
     return commandStatus();
 }
@@ -98,8 +98,6 @@ bool sendGetRequest(std::string file) {
 
     sendToServer(cmd);
 
-    std::cout << "Trimis la server: " << cmd << '\n';
-
     return commandStatus();
 }
 
@@ -108,7 +106,13 @@ bool sendPostRequest(std::string file) {
 
     sendToServer(cmd);
 
-    std::cout << "Trimis la server: " << cmd << '\n';
+    return commandStatus();
+}
+
+bool sendLogOutCommand() {
+    std::string cmd = "LOGOUT";
+
+    sendToServer(cmd);
 
     return commandStatus();
 }
@@ -162,6 +166,13 @@ int main(int argc, char *argv[]) {
                 std::cout << "Posted file!\n";
             }
         }).detach();
+    });
+
+    QObject::connect(ui.logOutButton, &QPushButton::clicked, [&ui]() {
+        sendLogOutCommand();
+        QMetaObject::invokeMethod(ui.stackedWidget, [&ui]() {
+            ui.stackedWidget->setCurrentIndex(0);
+        }, Qt::QueuedConnection);
     });
 
 
