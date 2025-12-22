@@ -4,16 +4,14 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <thread>
+#include <string>
+#include <cstring>
 
-#include <QApplication>
-#include <QMainWindow>
-#include <ui_mainwindow.h>
-#include <QStyleFactory>
-#include <QPalette>
-
+#include "main_window.h"
 
 #define PORT 8005
-#define IP "10.100.0.30"
+// #define IP "10.100.0.30"
+#define IP "192.168.1.11"
 #define BUFFER_SIZE 2048
 
 int sock;
@@ -26,7 +24,6 @@ void sendToServer(std::string msg) {
         std::cout << "Eroare la send\n";
     }
     sent = send(sock, msg.c_str(), msg.length(), 0);
-
     std::cout << "Trimis la server: " << msg << '\n';
 }
 
@@ -49,7 +46,6 @@ bool commandStatus() {
     }
 
     buffer[size] = '\0';
-
     std::cout << "De la server: " << buffer << '\n';
 
     std::string resp = buffer;
@@ -70,12 +66,10 @@ void initConnection() {
 
     if (connect(sock, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr)) < 0) {
         std::cout << "Eroare la connect\n";
-
         close(sock);
         return;
     }
     std::cout << "Client-ul s-a conectat!\n";
-
     isConnected = true;
 }
 
@@ -84,105 +78,106 @@ bool sendLoginCommand(std::string user, std::string passwd) {
         std::cout << "You're not connected...\n";
         return false;
     }
-
     std::string cmd = "LOGIN " + user + " " + passwd;
-
     sendToServer(cmd);
-
-
     return commandStatus();
 }
 
 bool sendGetRequest(std::string file) {
     std::string cmd = "GET " + file;
-
     sendToServer(cmd);
-
     return commandStatus();
 }
 
 bool sendPostRequest(std::string file) {
     std::string cmd = "POST " + file;
-
     sendToServer(cmd);
-
     return commandStatus();
 }
 
 bool sendLogOutCommand() {
     std::string cmd = "LOGOUT";
-
     sendToServer(cmd);
-
     return commandStatus();
 }
 
 int main(int argc, char *argv[]) {
     initConnection();
 
-    QApplication a(argc, argv);
-    a.setStyle(QStyleFactory::create("Fusion"));
-    QPalette lightPalette;
+    if (!isConnected) {
+        std::cerr << "Failed to connect to server!\n";
+        return 1;
+    }
 
+    auto ui = MainWindow::create();
 
-    a.setPalette(lightPalette);
+    slint::ComponentHandle<MainWindow> ui_handle(ui);
 
-    QMainWindow clientDialog;
-    Ui::MainWindow ui;
+    ui->on_get([](slint::SharedString file_path) {
+        std::thread network_thread([file_path]() {
+            bool response = sendGetRequest(file_path.data());
 
-    ui.setupUi(&clientDialog);
-
-    ui.stackedWidget->setCurrentIndex(0);
-
-    QObject::connect(ui.loginButton, &QPushButton::clicked, [&ui]() {
-        std::string username = ui.userLineEdit->text().toStdString();
-        std::string password = ui.passLineEdit->text().toStdString();
-
-        std::thread([username, password, ui]() {
-            bool resp = sendLoginCommand(username, password);
-
-            if (resp) {
-                QMetaObject::invokeMethod(ui.stackedWidget, [&ui]() {
-                    ui.stackedWidget->setCurrentIndex(1);
-                }, Qt::QueuedConnection);
+            if (!response) {
+                std::cout << "Get esuat de la server.\n";
             }
-        }).detach();
+        });
+
+        network_thread.detach();
     });
 
-    QObject::connect(ui.getButton, &QPushButton::clicked, [&ui]() {
-        std::thread([ui]() {
-            bool resp = sendGetRequest(std::string("/home/repos/js"));
+    ui->on_post([](slint::SharedString file_data) {
+        std::thread network_thread([file_data]() {
+            bool response = sendPostRequest(file_data.data());
 
-            if (resp) {
-                std::cout << "Returned file!\n";
+            if (!response) {
+                std::cout << "Get esuat de la server.\n";
             }
-        }).detach();
-    });
-    QObject::connect(ui.postButton, &QPushButton::clicked, [&ui]() {
-        std::thread([ui]() {
-            bool resp = sendPostRequest(std::string("/home/repos/js"));
+        });
 
-            if (resp) {
-                std::cout << "Posted file!\n";
-            }
-        }).detach();
+        network_thread.detach();
     });
 
-    QObject::connect(ui.logOutButton, &QPushButton::clicked, [&ui]() {
-        sendLogOutCommand();
-        QMetaObject::invokeMethod(ui.stackedWidget, [&ui]() {
-            ui.stackedWidget->setCurrentIndex(0);
-        }, Qt::QueuedConnection);
+    ui->on_logout([ui_handle]() {
+        std::thread network_thread([ui_handle]() {
+            bool response = sendLogOutCommand();
+
+            slint::invoke_from_event_loop([ui_handle, response]() {
+                if (auto *ui = ui_handle.operator->()) {
+                    ui->set_is_logged(!response);
+
+                    if (!response) {
+                        std::cout << "Logout esuat de pe server.\n";
+                    }
+                }
+            });
+        });
+
+        network_thread.detach();
     });
 
+    ui->on_try_login([ui_handle](slint::SharedString name, slint::SharedString passwd) {
+        std::thread network_thread([ui_handle, name, passwd]() {
+            bool response = sendLoginCommand(name.data(), passwd.data());
 
-    clientDialog.show();
+            slint::invoke_from_event_loop([ui_handle, response]() {
+                if (auto *ui = ui_handle.operator->()) {
+                    ui->set_is_logged(response);
 
-    int result = QApplication::exec();
+                    if (!response) {
+                        std::cout << "Login esuat pe server.\n";
+                    }
+                }
+            });
+        });
+
+        network_thread.detach();
+    });
+
+    ui->run();
 
     if (sock >= 0) {
         close(sock);
     }
 
-    return result;
+    return 0;
 }

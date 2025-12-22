@@ -1,0 +1,42 @@
+import {
+    Button,
+    LineEdit,
+    HorizontalBox,
+    VerticalBox,
+} from "std-widgets.slint";
+import { MyButton } from "my_button.slint";
+import { LoginScreen } from "login_screen.slint";
+import { MainPage } from "main_page.slint";
+
+export component MainWindow inherits Window {
+    title: "Personal Cloud";
+    preferred-width: 800px;
+    preferred-height: 600px;
+    background: #f0f0f0;
+
+    callback try-login(string, string);
+
+    callback get(string);
+    callback post(string);
+    callback logout();
+
+    in-out property <bool> is-logged: false;
+
+    if !is-logged: LoginScreen {
+        try-login(name, passwd) => {
+            root.try-login(name, passwd);
+        }
+    }
+
+    if is-logged: MainPage {
+        get(file-path) => {
+            root.get(file-path);
+        }
+        post(file-data) => {
+            root.post(file-data);
+        }
+        logout => {
+            root.logout();
+        }
+    }
+}

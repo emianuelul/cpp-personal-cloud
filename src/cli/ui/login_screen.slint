@@ -1,0 +1,59 @@
+import { VerticalBox, LineEdit } from "std-widgets.slint";
+import { MyButton } from "my_button.slint";
+export component LoginScreen inherits VerticalLayout {
+    alignment: center;
+
+    property <string> username;
+    property <string> passwd;
+    callback try-login(string, string);
+
+    HorizontalLayout {
+        alignment: center;
+
+        Rectangle {
+            width: 350px;
+            background: rgba(22, 32, 64, 0.8);
+            border-radius: 32px;
+
+            VerticalBox {
+                spacing: 15px;
+                padding: 18px;
+
+                VerticalLayout {
+                    spacing: 5px;
+                    Text {
+                        text: "Username:";
+                        color: white;
+                    }
+
+                    LineEdit {
+                        placeholder-text: "Enter username";
+                        text <=> username;
+                    }
+                }
+
+                VerticalLayout {
+                    spacing: 5px;
+                    Text {
+                        text: "Password:";
+                        color: white;
+                    }
+
+                    LineEdit {
+                        placeholder-text: "Enter password";
+                        input-type: password;
+                        text <=> passwd;
+                    }
+                }
+
+                MyButton {
+                    text: "Login";
+
+                    clicked => {
+                        try-login(username, passwd);
+                    }
+                }
+            }
+        }
+    }
+}

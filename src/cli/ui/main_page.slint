@@ -1,0 +1,42 @@
+import { MyButton } from "my_button.slint";
+export component MainPage inherits VerticalLayout {
+    alignment: center;
+
+    callback get(string);
+    callback post(string);
+    callback logout();
+
+    HorizontalLayout {
+        alignment: center;
+        Rectangle {
+            width: 350px;
+            background: rgba(22, 32, 64, 0.8);
+            border-radius: 30px;
+
+            VerticalLayout {
+                spacing: 15px;
+                padding: 14px;
+                MyButton {
+                    text: "Get";
+                    clicked => {
+                        get("file-name");
+                    }
+                }
+
+                MyButton {
+                    text: "Post";
+                    clicked => {
+                        post("file-name");
+                    }
+                }
+
+                MyButton {
+                    text: "Log Out";
+                    clicked => {
+                        logout();
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,301 @@
+#pragma once
+
+/* Generated with cbindgen:0.29.2 */
+
+#include <cstdarg>
+#include <cstdint>
+#include <cstdlib>
+#include <ostream>
+#include <new>
+#include "slint_enums_internal.h"
+#include "slint_point.h"
+            namespace slint::cbindgen_private {
+                struct KeyEvent; struct PointerEvent;
+                struct Rect;
+                using LogicalRect = Rect;
+                using LogicalPoint = Point2D<float>;
+                using LogicalLength = float;
+            }
+
+namespace slint {
+namespace cbindgen_private {
+namespace types {
+
+/// A mouse or touch event
+///
+/// The only difference with [`crate::platform::WindowEvent`] is that it uses untyped `Point`
+/// TODO: merge with platform::WindowEvent
+struct MouseEvent {
+    enum class Tag {
+        /// The mouse or finger was pressed
+        /// `position` is the position of the mouse when the event happens.
+        /// `button` describes the button that is pressed when the event happens.
+        /// `click_count` represents the current number of clicks.
+        Pressed,
+        /// The mouse or finger was released
+        /// `position` is the position of the mouse when the event happens.
+        /// `button` describes the button that is pressed when the event happens.
+        /// `click_count` represents the current number of clicks.
+        Released,
+        /// The position of the pointer has changed
+        Moved,
+        /// Wheel was operated.
+        /// `pos` is the position of the mouse when the event happens.
+        /// `delta_x` is the amount of pixels to scroll in horizontal direction,
+        /// `delta_y` is the amount of pixels to scroll in vertical direction.
+        Wheel,
+        /// The mouse is being dragged over this item.
+        /// [`InputEventResult::EventIgnored`] means that the item does not handle the drag operation
+        /// and [`InputEventResult::EventAccepted`] means that the item can accept it.
+        DragMove,
+        /// The mouse is released while dragging over this item.
+        Drop,
+        /// The mouse exited the item or component
+        Exit,
+    };
+
+    struct Pressed_Body {
+        LogicalPoint position;
+        PointerEventButton button;
+        uint8_t click_count;
+
+        bool operator==(const Pressed_Body& other) const {
+            return position == other.position &&
+                   button == other.button &&
+                   click_count == other.click_count;
+        }
+        bool operator!=(const Pressed_Body& other) const {
+            return position != other.position ||
+                   button != other.button ||
+                   click_count != other.click_count;
+        }
+    };
+
+    struct Released_Body {
+        LogicalPoint position;
+        PointerEventButton button;
+        uint8_t click_count;
+
+        bool operator==(const Released_Body& other) const {
+            return position == other.position &&
+                   button == other.button &&
+                   click_count == other.click_count;
+        }
+        bool operator!=(const Released_Body& other) const {
+            return position != other.position ||
+                   button != other.button ||
+                   click_count != other.click_count;
+        }
+    };
+
+    struct Moved_Body {
+        LogicalPoint position;
+
+        bool operator==(const Moved_Body& other) const {
+            return position == other.position;
+        }
+        bool operator!=(const Moved_Body& other) const {
+            return position != other.position;
+        }
+    };
+
+    struct Wheel_Body {
+        LogicalPoint position;
+        float delta_x;
+        float delta_y;
+
+        bool operator==(const Wheel_Body& other) const {
+            return position == other.position &&
+                   delta_x == other.delta_x &&
+                   delta_y == other.delta_y;
+        }
+        bool operator!=(const Wheel_Body& other) const {
+            return position != other.position ||
+                   delta_x != other.delta_x ||
+                   delta_y != other.delta_y;
+        }
+    };
+
+    struct DragMove_Body {
+        DropEvent _0;
+
+        bool operator==(const DragMove_Body& other) const {
+            return _0 == other._0;
+        }
+        bool operator!=(const DragMove_Body& other) const {
+            return _0 != other._0;
+        }
+    };
+
+    struct Drop_Body {
+        DropEvent _0;
+
+        bool operator==(const Drop_Body& other) const {
+            return _0 == other._0;
+        }
+        bool operator!=(const Drop_Body& other) const {
+            return _0 != other._0;
+        }
+    };
+
+    Tag tag;
+    union {
+        Pressed_Body pressed;
+        Released_Body released;
+        Moved_Body moved;
+        Wheel_Body wheel;
+        DragMove_Body drag_move;
+        Drop_Body drop;
+    };
+
+    static MouseEvent Pressed(const LogicalPoint &position,
+                              const PointerEventButton &button,
+                              const uint8_t &click_count) {
+        MouseEvent result;
+        ::new (&result.pressed.position) (LogicalPoint)(position);
+        ::new (&result.pressed.button) (PointerEventButton)(button);
+        ::new (&result.pressed.click_count) (uint8_t)(click_count);
+        result.tag = Tag::Pressed;
+        return result;
+    }
+
+    bool IsPressed() const {
+        return tag == Tag::Pressed;
+    }
+
+    static MouseEvent Released(const LogicalPoint &position,
+                               const PointerEventButton &button,
+                               const uint8_t &click_count) {
+        MouseEvent result;
+        ::new (&result.released.position) (LogicalPoint)(position);
+        ::new (&result.released.button) (PointerEventButton)(button);
+        ::new (&result.released.click_count) (uint8_t)(click_count);
+        result.tag = Tag::Released;
+        return result;
+    }
+
+    bool IsReleased() const {
+        return tag == Tag::Released;
+    }
+
+    static MouseEvent Moved(const LogicalPoint &position) {
+        MouseEvent result;
+        ::new (&result.moved.position) (LogicalPoint)(position);
+        result.tag = Tag::Moved;
+        return result;
+    }
+
+    bool IsMoved() const {
+        return tag == Tag::Moved;
+    }
+
+    static MouseEvent Wheel(const LogicalPoint &position,
+                            const float &delta_x,
+                            const float &delta_y) {
+        MouseEvent result;
+        ::new (&result.wheel.position) (LogicalPoint)(position);
+        ::new (&result.wheel.delta_x) (float)(delta_x);
+        ::new (&result.wheel.delta_y) (float)(delta_y);
+        result.tag = Tag::Wheel;
+        return result;
+    }
+
+    bool IsWheel() const {
+        return tag == Tag::Wheel;
+    }
+
+    static MouseEvent DragMove(const DropEvent &_0) {
+        MouseEvent result;
+        ::new (&result.drag_move._0) (DropEvent)(_0);
+        result.tag = Tag::DragMove;
+        return result;
+    }
+
+    bool IsDragMove() const {
+        return tag == Tag::DragMove;
+    }
+
+    static MouseEvent Drop(const DropEvent &_0) {
+        MouseEvent result;
+        ::new (&result.drop._0) (DropEvent)(_0);
+        result.tag = Tag::Drop;
+        return result;
+    }
+
+    bool IsDrop() const {
+        return tag == Tag::Drop;
+    }
+
+    static MouseEvent Exit() {
+        MouseEvent result;
+        result.tag = Tag::Exit;
+        return result;
+    }
+
+    bool IsExit() const {
+        return tag == Tag::Exit;
+    }
+
+    bool operator==(const MouseEvent& other) const {
+        if (tag != other.tag) {
+            return false;
+        }
+        switch (tag) {
+            case Tag::Pressed: return pressed == other.pressed;
+            case Tag::Released: return released == other.released;
+            case Tag::Moved: return moved == other.moved;
+            case Tag::Wheel: return wheel == other.wheel;
+            case Tag::DragMove: return drag_move == other.drag_move;
+            case Tag::Drop: return drop == other.drop;
+            default: break;
+        }
+        return true;
+    }
+
+    bool operator!=(const MouseEvent& other) const {
+        return !(*this == other);
+    }
+
+    private:
+    MouseEvent() {
+
+    }
+    public:
+
+
+    ~MouseEvent() {
+        switch (tag) {
+            case Tag::Pressed: pressed.~Pressed_Body(); break;
+            case Tag::Released: released.~Released_Body(); break;
+            case Tag::Moved: moved.~Moved_Body(); break;
+            case Tag::Wheel: wheel.~Wheel_Body(); break;
+            case Tag::DragMove: drag_move.~DragMove_Body(); break;
+            case Tag::Drop: drop.~Drop_Body(); break;
+            default: break;
+        }
+    }
+
+    MouseEvent(const MouseEvent& other)
+     : tag(other.tag) {
+        switch (tag) {
+            case Tag::Pressed: ::new (&pressed) (Pressed_Body)(other.pressed); break;
+            case Tag::Released: ::new (&released) (Released_Body)(other.released); break;
+            case Tag::Moved: ::new (&moved) (Moved_Body)(other.moved); break;
+            case Tag::Wheel: ::new (&wheel) (Wheel_Body)(other.wheel); break;
+            case Tag::DragMove: ::new (&drag_move) (DragMove_Body)(other.drag_move); break;
+            case Tag::Drop: ::new (&drop) (Drop_Body)(other.drop); break;
+            default: break;
+        }
+    }
+    MouseEvent& operator=(const MouseEvent& other) {
+        if (this != &other) {
+            this->~MouseEvent();
+            new (this) MouseEvent(other);
+        }
+        return *this;
+    }
+};
+
+}  // namespace types
+}  // namespace cbindgen_private
+}  // namespace slint
