@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-#include "utility_functions.h"
+#include "../../../include/utility_functions.h"
 #include "command_handlers.h"
 
 #define BUFFER_SIZE 2048

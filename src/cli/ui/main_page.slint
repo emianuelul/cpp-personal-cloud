@@ -1,39 +1,59 @@
 import { MyButton } from "my_button.slint";
-export component MainPage inherits VerticalLayout {
-    alignment: center;
-
+import {
+    Button,
+    LineEdit,
+    HorizontalBox,
+    VerticalBox,
+} from "std-widgets.slint";
+export component MainPage inherits Rectangle {
     callback get(string);
     callback post(string);
     callback logout();
+    callback open-file-select();
 
-    HorizontalLayout {
+    in-out property <[string]> files: [];
+
+    background: white;
+
+    VerticalBox {
         alignment: center;
-        Rectangle {
-            width: 350px;
-            background: rgba(22, 32, 64, 0.8);
-            border-radius: 30px;
+        HorizontalBox {
+            alignment: center;
+            padding: 10px;
+            Rectangle {
+                width: 350px;
+                background: rgba(22, 32, 64, 0.8);
+                border-radius: 30px;
 
-            VerticalLayout {
-                spacing: 15px;
-                padding: 14px;
-                MyButton {
-                    text: "Get";
-                    clicked => {
-                        get("file-name");
+                VerticalLayout {
+                    spacing: 15px;
+                    padding: 14px;
+                    MyButton {
+                        text: "Get";
+                        clicked => {
+                            get("file-name");
+                        }
                     }
-                }
 
-                MyButton {
-                    text: "Post";
-                    clicked => {
-                        post("file-name");
+                    MyButton {
+                        text: "Post";
+                        clicked => {
+                            post("file-name");
+                        }
                     }
-                }
 
-                MyButton {
-                    text: "Log Out";
-                    clicked => {
-                        logout();
+                    MyButton {
+                        text: "Log Out";
+                        clicked => {
+                            logout();
+                        }
+                    }
+
+                    MyButton {
+                        text: "Open File Select";
+                        clicked => {
+                            open-file-select();
+                        }
                     }
                 }
             }

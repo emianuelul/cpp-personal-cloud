@@ -1,19 +1,23 @@
-#include "sv_headers/client_worker.h"
-#include "sv_headers/utility_functions.h"
 #include <sys/socket.h>
 #include <unistd.h>
 #include <iostream>
 #include <arpa/inet.h>
 #include <thread>
+#include <nlohmann/json.hpp>
+
+
+#include "utility_functions.h"
+#include "sv_headers/client_worker.h"
+
 
 #define PORT 8005
 #define BACKLOG 30
 #define BUFFER_SIZE 2048
 
-int main(){
+int main() {
     const int serverFd = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (serverFd  == 0) {
+    if (serverFd == 0) {
         std::cout << "Eroare la crearea socket-ului\n";
         return -1;
     }
@@ -30,7 +34,7 @@ int main(){
 
     socklen_t serverLen = sizeof(serverAddr);
 
-    if (bind(serverFd, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr))) {
+    if (bind(serverFd, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr))) {
         std::cout << "Eroare la bind\n";
 
         close(serverFd);
@@ -47,8 +51,8 @@ int main(){
 
     std::cout << "Serverul asculta pe portul: " << PORT << "\n";
 
-    while(true) {
-        int new_sock = accept(serverFd, reinterpret_cast<sockaddr*>(&serverAddr), &serverLen);
+    while (true) {
+        int new_sock = accept(serverFd, reinterpret_cast<sockaddr *>(&serverAddr), &serverLen);
         if (new_sock < 0) {
             std::cout << "Eroare la connect\n";
 

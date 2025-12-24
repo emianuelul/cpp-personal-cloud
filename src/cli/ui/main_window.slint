@@ -20,7 +20,9 @@ export component MainWindow inherits Window {
     callback post(string);
     callback logout();
 
-    in-out property <bool> is-logged: false;
+    callback open-file-select();
+
+    in-out property <bool> is-logged: true;
 
     if !is-logged: LoginScreen {
         try-login(name, passwd) => {
@@ -37,6 +39,9 @@ export component MainWindow inherits Window {
         }
         logout => {
             root.logout();
+        }
+        open-file-select => {
+            root.open-file-select();
         }
     }
 }
