@@ -4,7 +4,6 @@ project(cpp_personal_cloud)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Setează path-urile pentru Slint
 set(Slint_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/Slint/lib/cmake/Slint")
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/include/Slint/lib/cmake/Slint" ${CMAKE_MODULE_PATH})
 
@@ -20,7 +19,13 @@ add_executable(server_exec
         src/srv/sv_headers/client_worker.h
         src/srv/sv_headers/command_handlers.h
         include/utility_functions.h
+        include/cloud_file.h
 )
+
+target_include_directories(server_exec PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+)
+
 target_link_libraries(server_exec PRIVATE Threads::Threads)
 
 # --- CLIENT ---

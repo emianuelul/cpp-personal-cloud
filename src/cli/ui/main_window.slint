@@ -17,12 +17,10 @@ export component MainWindow inherits Window {
     callback try-login(string, string);
 
     callback get(string);
-    callback post(string);
+    callback post();
     callback logout();
 
-    callback open-file-select();
-
-    in-out property <bool> is-logged: true;
+    in-out property <bool> is-logged: false;
 
     if !is-logged: LoginScreen {
         try-login(name, passwd) => {
@@ -34,14 +32,11 @@ export component MainWindow inherits Window {
         get(file-path) => {
             root.get(file-path);
         }
-        post(file-data) => {
-            root.post(file-data);
+        post() => {
+            root.post();
         }
         logout => {
             root.logout();
-        }
-        open-file-select => {
-            root.open-file-select();
         }
     }
 }

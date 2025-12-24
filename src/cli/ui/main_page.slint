@@ -7,9 +7,8 @@ import {
 } from "std-widgets.slint";
 export component MainPage inherits Rectangle {
     callback get(string);
-    callback post(string);
+    callback post();
     callback logout();
-    callback open-file-select();
 
     in-out property <[string]> files: [];
 
@@ -38,7 +37,7 @@ export component MainPage inherits Rectangle {
                     MyButton {
                         text: "Post";
                         clicked => {
-                            post("file-name");
+                            post();
                         }
                     }
 
@@ -46,13 +45,6 @@ export component MainPage inherits Rectangle {
                         text: "Log Out";
                         clicked => {
                             logout();
-                        }
-                    }
-
-                    MyButton {
-                        text: "Open File Select";
-                        clicked => {
-                            open-file-select();
                         }
                     }
                 }

@@ -131,12 +131,27 @@ int main(int argc, char *argv[]) {
         network_thread.detach();
     });
 
-    ui->on_post([](slint::SharedString file_data) {
-        std::thread network_thread([file_data]() {
-            bool response = sendPostRequest(file_data.data());
+    ui->on_post([]() {
+        std::thread network_thread([]() {
+            auto selection = pfd::open_file("Select file to upload").result();
 
-            if (!response) {
-                std::cout << "Get esuat de la server.\n";
+            if (!selection.empty()) {
+                std::filesystem::path path = selection[0];
+
+                CloudFile fileToSend = {
+                    std::filesystem::file_size(path),
+                    path.filename().string(),
+                };
+
+                json j = fileToSend;
+
+                std::string serialized_cloud_file = j.dump();
+
+                bool response = sendPostRequest(serialized_cloud_file);
+
+                if (!response) {
+                    std::cout << "Post esuat de la server.\n";
+                }
             }
         });
 
@@ -177,25 +192,6 @@ int main(int argc, char *argv[]) {
         });
 
         network_thread.detach();
-    });
-
-    ui->on_open_file_select([]() {
-        auto selection = pfd::open_file("Select file to upload").result();
-
-        if (!selection.empty()) {
-            std::filesystem::path path = selection[0];
-
-            CloudFile fileToSend = {
-                std::filesystem::file_size(path),
-                path.filename().string(),
-            };
-
-            json j = fileToSend;
-
-            std::string serialized_cloud_file = j.dump();
-
-            sendToServer(serialized_cloud_file);
-        }
     });
 
     ui->run();
