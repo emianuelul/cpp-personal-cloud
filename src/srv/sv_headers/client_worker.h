@@ -6,8 +6,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-
-#include "../../../include/utility_functions.h"
+#include "utility_functions.h"
 #include "command_handlers.h"
 
 #define BUFFER_SIZE 2048
@@ -41,7 +40,7 @@ private:
 
                         bool succ = false;
                         try {
-                            std::unique_ptr<Command> command = CommandFactory::createCommand(cmd);
+                            std::unique_ptr<Command> command = CommandFactory::createCommand(cmd, this->fd);
                             ServerResponse resp = command->execute();
                             std::cout << "SUCCESS: " << resp.status_message << '\n';
                             succ = true;

@@ -31,8 +31,8 @@ target_link_libraries(server_exec PRIVATE Threads::Threads)
 # --- CLIENT ---
 add_executable(client_exec
         src/cli/client.cpp
-        src/cli/cli_headers/session_manager.h
         include/cloud_file.h
+        src/cli/cli_headers/server_connection.h
 )
 
 slint_target_sources(client_exec src/cli/ui/main_window.slint)
