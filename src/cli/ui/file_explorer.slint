@@ -1,5 +1,6 @@
 import { FileCard } from "file_card.slint";
 import { ScrollView } from "std-widgets.slint";
+import { MyButton } from "my_button.slint";
 export struct File {
     name: string,
     size: float,
@@ -17,7 +18,8 @@ export component FileExplorer inherits Rectangle {
         { name: "structuri_date.pdf", size: 12.3, date: "10/01/2026" }
     ];
 
-    vertical-stretch: 1;
+    property <int> gap: 12;
+
     border-radius: 16px;
 
     ScrollView {
@@ -25,7 +27,7 @@ export component FileExplorer inherits Rectangle {
         VerticalLayout {
             padding: 32px;
 
-            spacing: 16px;
+            spacing: gap * 1px;
 
             for file[i] in files: VerticalLayout {
                 FileCard {
@@ -34,7 +36,7 @@ export component FileExplorer inherits Rectangle {
                     date: file.date;
                 }
 
-                spacing: 16px;
+                spacing: gap * 1px;
 
                 if (i < root.files.length - 1): Rectangle {
                     height: 1px;

@@ -1,0 +1,39 @@
+import { MyButton } from "my_button.slint";
+import { HorizontalSpacer } from "spacers.slint";
+
+export component ActionPanel inherits Rectangle {
+    background: white;
+    border-radius: 16px;
+
+    preferred-width: 900px;
+
+    HorizontalLayout {
+
+        padding: 8px;
+
+        spacing: 16px;
+
+        MyButton {
+            horizontal-stretch: 0.25;
+            text: "View History";
+            static-bg: rgba(82, 159, 247, 0.1);
+            hover-bg: rgba(82, 159, 247, 0.2);
+        }
+
+        MyButton {
+            horizontal-stretch: 0.25;
+            text: "Add File";
+            fontsize: 24;
+            bold: true;
+            static-bg: rgba(82, 159, 247, 0.25);
+            hover-bg: rgba(82, 159, 247, 0.5);
+        }
+
+        MyButton {
+            horizontal-stretch: 0.25;
+            text: "Log Out";
+            static-bg: rgba(82, 159, 247, 0.1);
+            hover-bg: rgba(82, 159, 247, 0.2);
+        }
+    }
+}

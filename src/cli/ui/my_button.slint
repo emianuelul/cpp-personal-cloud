@@ -5,6 +5,8 @@ export component MyButton inherits TouchArea {
     in property <color> static-bg: rgba(255, 255, 255, 0.7);
     in property <color> hover-bg: rgba(255, 255, 255, 0.9);
 
+    in property <bool> bold: false;
+
     in property <int> fontsize: 16;
 
     mouse-cursor: pointer;
@@ -22,14 +24,16 @@ export component MyButton inherits TouchArea {
         }
 
         HorizontalLayout {
-            padding-top: 6px;
-            padding-bottom: 6px;
+            padding-top: 8px;
+            padding-bottom: 8px;
 
             Text {
                 text: text;
                 font-size: fontsize * 1px;
                 vertical-alignment: center;
                 horizontal-alignment: center;
+
+                font-weight: bold ? 600 : 400;
 
                 color: black;
 

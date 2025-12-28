@@ -5,23 +5,26 @@ import {
     HorizontalBox,
     VerticalBox,
 } from "std-widgets.slint";
-import { FileExplorer } from "file_explorer.slint";
+import { FileExplorer, File } from "file_explorer.slint";
 import { FileMetadataSection } from "file_metadata_section.slint";
+import { ActionPanel } from "action_panel.slint";
 
 export component MainPage inherits Rectangle {
     callback get(string);
     callback post();
     callback logout();
 
-    in-out property <[string]> files: [];
+    in-out property <[File]> files: [];
 
-    //    background: rgba(76, 84, 94, 1);
-        background: rgba(195, 213, 235, 1);
+    background: rgba(195, 213, 235, 1);
 
     VerticalLayout {
         padding: 8px;
-        alignment: center;
+        spacing: 16px;
+
         HorizontalLayout {
+            vertical-stretch: 1;
+            max-height: parent.height - 120px;
             spacing: 16px;
             padding: 16px;
 
@@ -33,6 +36,16 @@ export component MainPage inherits Rectangle {
 
             FileMetadataSection {
                 vertical-stretch: 1;
+                drop-shadow-blur: 30px;
+                drop-shadow-color: rgba(0, 0, 0, 0.35);
+            }
+        }
+
+        HorizontalLayout {
+            alignment: center;
+            min-height: 80px;
+
+            ActionPanel {
                 drop-shadow-blur: 30px;
                 drop-shadow-color: rgba(0, 0, 0, 0.35);
             }
