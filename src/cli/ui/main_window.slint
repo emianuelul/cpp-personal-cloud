@@ -10,9 +10,12 @@ import { MainPage } from "main_page.slint";
 
 export component MainWindow inherits Window {
     title: "Personal Cloud";
-    preferred-width: 800px;
-    preferred-height: 600px;
-    background: #f0f0f0;
+
+    min-width: 1000px;
+    min-height: 800px;
+
+    preferred-width: 1400px;
+    preferred-height: 800px;
 
     callback try-login(string, string);
 
@@ -20,7 +23,7 @@ export component MainWindow inherits Window {
     callback post();
     callback logout();
 
-    in-out property <bool> is-logged: false;
+    in-out property <bool> is-logged: true;
 
     if !is-logged: LoginScreen {
         try-login(name, passwd) => {

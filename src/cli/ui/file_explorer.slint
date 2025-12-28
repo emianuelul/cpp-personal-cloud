@@ -1,0 +1,47 @@
+import { FileCard } from "file_card.slint";
+import { ScrollView } from "std-widgets.slint";
+export struct File {
+    name: string,
+    size: float,
+    date: string,
+}
+
+export component FileExplorer inherits Rectangle {
+
+    background: white;
+
+    in property <[File]> files: [
+        { name: "proiect_webdev.zip", size: 156.4, date: "28/11/2025" },
+        { name: "main.cpp", size: 0.02, date: "15/12/2025" },
+        { name: "curs_python.mp4", size: 850.5, date: "02/01/2026" },
+        { name: "structuri_date.pdf", size: 12.3, date: "10/01/2026" }
+    ];
+
+    vertical-stretch: 1;
+    border-radius: 16px;
+
+    ScrollView {
+
+        VerticalLayout {
+            padding: 32px;
+
+            spacing: 16px;
+
+            for file[i] in files: VerticalLayout {
+                FileCard {
+                    name: file.name;
+                    size: file.size;
+                    date: file.date;
+                }
+
+                spacing: 16px;
+
+                if (i < root.files.length - 1): Rectangle {
+                    height: 1px;
+                    background: #d0d0d0;
+                    width: 95%;
+                }
+            }
+        }
+    }
+}

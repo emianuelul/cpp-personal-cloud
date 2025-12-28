@@ -2,9 +2,14 @@ import { Button } from "std-widgets.slint";
 export component MyButton inherits TouchArea {
     in property <string> text: "";
 
+    in property <color> static-bg: rgba(255, 255, 255, 0.7);
+    in property <color> hover-bg: rgba(255, 255, 255, 0.9);
+
+    in property <int> fontsize: 16;
+
     mouse-cursor: pointer;
     Rectangle {
-        background: root.has-hover ? rgba(255, 255, 255, 0.9) : rgba(255, 255, 255, 0.7);
+        background: root.has-hover ? hover-bg : static-bg;
         border-width: 1px;
         border-color: rgba(255, 255, 255, 0.2);
         border-radius: 16px;
@@ -22,7 +27,7 @@ export component MyButton inherits TouchArea {
 
             Text {
                 text: text;
-                font-size: 16px;
+                font-size: fontsize * 1px;
                 vertical-alignment: center;
                 horizontal-alignment: center;
 

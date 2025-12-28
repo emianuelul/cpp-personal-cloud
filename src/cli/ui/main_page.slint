@@ -5,6 +5,9 @@ import {
     HorizontalBox,
     VerticalBox,
 } from "std-widgets.slint";
+import { FileExplorer } from "file_explorer.slint";
+import { FileMetadataSection } from "file_metadata_section.slint";
+
 export component MainPage inherits Rectangle {
     callback get(string);
     callback post();
@@ -12,42 +15,26 @@ export component MainPage inherits Rectangle {
 
     in-out property <[string]> files: [];
 
-    background: white;
+    //    background: rgba(76, 84, 94, 1);
+        background: rgba(195, 213, 235, 1);
 
-    VerticalBox {
+    VerticalLayout {
+        padding: 8px;
         alignment: center;
-        HorizontalBox {
-            alignment: center;
-            padding: 10px;
-            Rectangle {
-                width: 350px;
-                background: rgba(22, 32, 64, 0.8);
-                border-radius: 30px;
+        HorizontalLayout {
+            spacing: 16px;
+            padding: 16px;
 
-                VerticalLayout {
-                    spacing: 15px;
-                    padding: 14px;
-                    MyButton {
-                        text: "Get";
-                        clicked => {
-                            get("file-name");
-                        }
-                    }
+            FileExplorer {
+                vertical-stretch: 1;
+                drop-shadow-blur: 30px;
+                drop-shadow-color: rgba(0, 0, 0, 0.35);
+            }
 
-                    MyButton {
-                        text: "Post";
-                        clicked => {
-                            post();
-                        }
-                    }
-
-                    MyButton {
-                        text: "Log Out";
-                        clicked => {
-                            logout();
-                        }
-                    }
-                }
+            FileMetadataSection {
+                vertical-stretch: 1;
+                drop-shadow-blur: 30px;
+                drop-shadow-color: rgba(0, 0, 0, 0.35);
             }
         }
     }

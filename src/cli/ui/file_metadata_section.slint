@@ -1,0 +1,96 @@
+import { MyButton } from "my_button.slint";
+import { VerticalSpacer } from "spacers.slint";
+export component FileMetadataSection inherits Rectangle {
+
+    in-out property <string> file-name: "picture.jpg";
+    in-out property <string> path: "home/pictures/picture.jpg";
+    in-out property <float> size: 6.7;
+
+    background: white;
+
+    border-radius: 16px;
+
+    max-width: 320px;
+
+    VerticalLayout {
+        alignment: center;
+        padding: 96px;
+        spacing: 32px;
+
+        HorizontalLayout {
+            alignment: center;
+            vertical-stretch: 0;
+            Rectangle {
+                height: 256px;
+                width: 256px;
+                background: white;
+                border-width: 2px;
+                border-color: black;
+            }
+        }
+
+        Text {
+            text: file-name;
+            font-size: 32px;
+            font-weight: 600;
+            horizontal-alignment: center;
+
+            color: black;
+        }
+
+        VerticalLayout {
+            alignment: center;
+            Text {
+                text: "Path";
+                font-size: 24px;
+                horizontal-alignment: center;
+
+                color: rgba(0,0,0,0.25);
+            }
+
+            Text {
+                text: path;
+                font-size: 24px;
+                font-weight: 400;
+                horizontal-alignment: center;
+
+                color: rgba(0,0,0,0.6);
+            }
+        }
+
+        VerticalLayout {
+            alignment: center;
+            Text {
+                text: "Size";
+                font-size: 24px;
+                horizontal-alignment: center;
+
+                color: rgba(0,0,0,0.25);
+            }
+
+            Text {
+                text: size + "MB";
+                font-size: 24px;
+                font-weight: 400;
+                horizontal-alignment: center;
+                color: rgba(0,0,0,0.6);
+            }
+        }
+
+        VerticalSpacer { }
+
+        MyButton {
+            text: "Download File";
+            static-bg: rgba(79, 232, 171, 0.25);
+            hover-bg: rgba(79, 232, 171, 0.5);
+            fontsize: 24;
+        }
+
+        MyButton {
+            text: "Delete File";
+            static-bg: rgba(232, 79, 79, 0.25);
+            hover-bg: rgba(232, 79, 79, 0.5);
+            fontsize: 24;
+        }
+    }
+}

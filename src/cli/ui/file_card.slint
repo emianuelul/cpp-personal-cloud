@@ -1,0 +1,54 @@
+import { HorizontalSpacer } from "spacers.slint";
+export component FileCard inherits Rectangle {
+    in property <string> name: "name.type";
+    in property <float> size: 6.5;
+    in property <string> date: "dd/mm/yyyy";
+
+    HorizontalLayout {
+
+        spacing: 32px;
+
+        HorizontalLayout {
+            alignment: start;
+            vertical-stretch: 0;
+            horizontal-stretch: 0;
+            Rectangle {
+                height: 32px;
+                width: 32px;
+                background: white;
+                border-width: 2px;
+                border-color: black;
+            }
+        }
+
+        Text {
+            text: name;
+            font-size: 24px;
+            font-weight: 600;
+            horizontal-alignment: left;
+            vertical-alignment: center;
+
+            color: black;
+        }
+
+        HorizontalSpacer { }
+
+        Text {
+            text: size + "MB";
+            font-size: 24px;
+            horizontal-alignment: left;
+            vertical-alignment: center;
+
+            color: rgba(0,0,0,0.5);
+        }
+
+        Text {
+            text: date;
+            font-size: 24px;
+            horizontal-alignment: left;
+            vertical-alignment: center;
+
+            color: rgba(0,0,0,0.5);
+        }
+    }
+}
