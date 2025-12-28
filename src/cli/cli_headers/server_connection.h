@@ -119,6 +119,10 @@ public:
             std::cout << "You're not connected...\n";
             return false;
         }
+
+        this->user = user;
+        this->pass = passwd;
+
         std::string cmd = "LOGIN " + user + " " + passwd;
         sendToServer(cmd);
         return receiveStatus();
