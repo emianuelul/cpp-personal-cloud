@@ -41,11 +41,20 @@ private:
                         std::cout << "Received command: " << cmd << "\n";
 
                         bool succ = false;
+                        std::string response_json = "";
+
                         try {
                             std::unique_ptr<Command> command = CommandFactory::createCommand(cmd, this->fd, session);
                             ServerResponse resp = command->execute();
-                            std::cout << "SUCCESS: " << resp.status_message << '\n';
-                            succ = true;
+
+                            // status_code == 0 înseamnă SUCCESS
+                            if (resp.status_code == 0) {
+                                std::cout << "SUCCESS: " << resp.status_message << '\n';
+                                succ = true;
+                                response_json = resp.response_data_json;
+                            } else {
+                                std::cout << "FAILED: " << resp.status_message << '\n';
+                            }
                         } catch (const char *err) {
                             std::cerr << "COMANDA EROARE: " << err << "\n";
                         } catch (const std::exception &e) {
@@ -55,10 +64,16 @@ private:
                         }
 
                         std::string msgBack = succ ? "SUCC" : "FAIL";
-
                         int msgSize = msgBack.length();
                         send(fd, &msgSize, sizeof(int), 0);
                         send(fd, msgBack.c_str(), msgBack.length(), 0);
+
+                        if (succ && !response_json.empty()) {
+                            int jsonSize = response_json.length();
+                            send(fd, &jsonSize, sizeof(int), 0);
+                            send(fd, response_json.c_str(), response_json.length(), 0);
+                            std::cout << "Sent JSON response: " << jsonSize << " bytes\n";
+                        }
                     } else {
                         std::cerr << "Eroare la primire mesaj: așteptat " << size << ", primit " << received << "\n";
                     }

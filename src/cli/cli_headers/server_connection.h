@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#include "cloud_dir.h"
 #include "cloud_file.h"
 
 #define BUFFER_SIZE 8192
@@ -39,28 +40,30 @@ private:
     }
 
     bool receiveStatus() {
-        char buffer[BUFFER_SIZE];
-        memset(buffer, 0, BUFFER_SIZE);
         int size;
-        ssize_t received = recv(sock, &size, sizeof(int), 0);
-
-        if (received < 0) {
-            std::cout << "Eroare la primirea dimensiunii!\n";
+        if (recv(sock, &size, sizeof(int), 0) != sizeof(int)) {
+            std::cerr << "Eroare la primirea dimensiunii status\n";
             return false;
         }
 
-        received = recv(sock, buffer, size, 0);
+        if (size <= 0 || size >= BUFFER_SIZE) {
+            std::cerr << "Dimensiune status invalidă: " << size << "\n";
+            return false;
+        }
 
+        char buffer[BUFFER_SIZE];
+        int received = recv(sock, buffer, size, 0);
         if (received != size) {
-            std::cout << "Eroare: primit " << received << " bytes si asteptam " << size << "\n";
+            std::cerr << "Eroare la primirea status-ului\n";
             return false;
         }
 
         buffer[size] = '\0';
-        std::cout << "De la server: " << buffer << '\n';
+        std::string status(buffer);
 
-        std::string resp = buffer;
-        return (resp == "SUCC");
+        std::cout << "Status primit: " << status << "\n";
+
+        return status == "SUCC";
     }
 
 public:
@@ -125,6 +128,7 @@ public:
 
         std::string cmd = "LOGIN " + user + " " + passwd;
         sendToServer(cmd);
+
         return receiveStatus();
     }
 
@@ -222,7 +226,65 @@ public:
     bool list() {
         std::string cmd = "LIST";
         sendToServer(cmd);
-        return receiveStatus();
+
+        bool status = receiveStatus();
+
+        if (!status) {
+            std::cerr << "Comanda LIST a eșuat\n";
+            return false;
+        }
+
+        int json_size;
+        if (recv(sock, &json_size, sizeof(int), 0) != sizeof(int)) {
+            std::cerr << "Eroare la primirea dimensiunii JSON\n";
+            return false;
+        }
+
+        if (json_size <= 0 || json_size >= BUFFER_SIZE) {
+            std::cerr << "Dimensiune JSON invalidă: " << json_size << "\n";
+            return false;
+        }
+
+        std::cout << "Primesc JSON de " << json_size << " bytes\n";
+
+        char buffer[BUFFER_SIZE];
+        memset(buffer, 0, BUFFER_SIZE);
+
+        int total_received = 0;
+        while (total_received < json_size) {
+            int bytes_to_read = json_size - total_received;
+            if (bytes_to_read > BUFFER_SIZE - total_received - 1) {
+                bytes_to_read = BUFFER_SIZE - total_received - 1;
+            }
+            int received = recv(sock, buffer + total_received, bytes_to_read, 0);
+            if (received <= 0) {
+                std::cerr << "Eroare la primirea JSON-ului\n";
+                return false;
+            }
+            total_received += received;
+        }
+
+        buffer[total_received] = '\0';
+        std::string json_str(buffer);
+
+        std::cout << "JSON primit: " << json_str.substr(0, 100) << "...\n";
+
+        try {
+            json j = json::parse(json_str);
+            CloudDir root = j.get<CloudDir>();
+
+            std::cout << "\n=== Structura Cloud Storage ===\n";
+            std::cout << json_str << '\n';
+
+            return true;
+        } catch (const json::parse_error &e) {
+            std::cerr << "Eroare la parsarea JSON: " << e.what() << "\n";
+            std::cerr << "JSON primit: " << json_str << "\n";
+            return false;
+        } catch (const std::exception &e) {
+            std::cerr << "Eroare: " << e.what() << "\n";
+            return false;
+        }
     }
 };
 

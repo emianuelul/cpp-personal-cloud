@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
                 std::filesystem::path path = selection[0];
 
                 bool response = ServerConnection::getInstance().post(path.string());
+                bool listResponse = ServerConnection::getInstance().list();
 
                 if (response) {
                     std::cout << "Fisier încarcat cu succes!\n";
@@ -79,7 +80,7 @@ int main(int argc, char *argv[]) {
     ui->on_try_login([ui_handle](slint::SharedString name, slint::SharedString passwd) {
         std::thread network_thread([ui_handle, name, passwd]() {
             bool response = ServerConnection::getInstance().login(name.data(), passwd.data());
-
+            bool listResponse = ServerConnection::getInstance().list();
             slint::invoke_from_event_loop([ui_handle, response]() {
                 if (auto *ui = ui_handle.operator->()) {
                     ui->set_is_logged(response);

@@ -155,7 +155,7 @@ public:
             std::cout << "File saved with redundancy: " << received_file.name
                     << " (" << total_received << " bytes)\n";
 
-            return ServerResponse{0, "Post Successful", received_file.name};
+            return ServerResponse{0, "Post Successful", ""};
         } catch (const json::parse_error &e) {
             return ServerResponse{1, "JSON parse error", e.what()};
         } catch (const std::exception &e) {
