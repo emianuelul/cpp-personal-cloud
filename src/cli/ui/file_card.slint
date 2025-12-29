@@ -1,7 +1,7 @@
 import { HorizontalSpacer } from "spacers.slint";
 export component FileCard inherits Rectangle {
     in property <string> name: "name.type";
-    in property <float> size: 6.5;
+    in property <string> size: "6.5MB";
     in property <string> date: "dd/mm/yyyy";
 
     HorizontalLayout {
@@ -34,7 +34,7 @@ export component FileCard inherits Rectangle {
         HorizontalSpacer { }
 
         Text {
-            text: size + "MB";
+            text: size;
             font-size: 24px;
             horizontal-alignment: left;
             vertical-alignment: center;

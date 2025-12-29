@@ -9,15 +9,10 @@
 
 #include "cloud_dir.h"
 #include "cloud_file.h"
+#include "server_response.h"
 #include "user_session.h"
 
 using json = nlohmann::json;
-
-struct ServerResponse {
-    int status_code;
-    std::string status_message;
-    std::string response_data_json;
-};
 
 class Command {
 public:
@@ -40,9 +35,9 @@ public:
 
     ServerResponse execute() override {
         if (session.login(username, passwd)) {
-            return ServerResponse{0, "Login Successful for " + username, ""};
+            return ServerResponse{1, "Login Successful for " + username, ""};
         }
-        return ServerResponse{1, "Login Failed", ""};
+        return ServerResponse{0, "Login Failed", ""};
     }
 };
 
@@ -56,7 +51,7 @@ public:
 
     ServerResponse execute() override {
         session.logout();
-        return ServerResponse{0, "Logout Successful", ""};
+        return ServerResponse{1, "Logout Successful", ""};
     }
 };
 
@@ -72,11 +67,11 @@ public:
 
     ServerResponse execute() override {
         if (!session.isAuthenticated()) {
-            return ServerResponse{1, "Not authenticated", ""};
+            return ServerResponse{0, "Not authenticated", ""};
         }
 
         // TODO: Implementeaza GET
-        return ServerResponse{0, "Get Successful", ""};
+        return ServerResponse{1, "Get Successful", ""};
     }
 };
 
@@ -93,7 +88,7 @@ public:
 
     ServerResponse execute() override {
         if (!session.isAuthenticated()) {
-            return ServerResponse{1, "Not authenticated", ""};
+            return ServerResponse{0, "Not authenticated", ""};
         }
 
         try {
@@ -109,14 +104,14 @@ public:
             std::filesystem::path backup_file = backup_dir / received_file.name;
 
             if (std::filesystem::exists(primary_file)) {
-                return ServerResponse{1, "File already exists", ""};
+                return ServerResponse{0, "File already exists", ""};
             }
 
             std::ofstream primary_stream(primary_file, std::ios::binary);
             std::ofstream backup_stream(backup_file, std::ios::binary);
 
             if (!primary_stream.is_open() || !backup_stream.is_open()) {
-                return ServerResponse{1, "Failed to create files", ""};
+                return ServerResponse{0, "Failed to create files", ""};
             }
 
             std::string ack = "READY";
@@ -140,7 +135,7 @@ public:
                     backup_stream.close();
                     std::filesystem::remove(primary_file);
                     std::filesystem::remove(backup_file);
-                    return ServerResponse{1, "Transfer interrupted", ""};
+                    return ServerResponse{0, "Transfer interrupted", ""};
                 }
 
                 primary_stream.write(buffer, bytes_received);
@@ -155,11 +150,11 @@ public:
             std::cout << "File saved with redundancy: " << received_file.name
                     << " (" << total_received << " bytes)\n";
 
-            return ServerResponse{0, "Post Successful", ""};
+            return ServerResponse{1, "Post Successful", ""};
         } catch (const json::parse_error &e) {
-            return ServerResponse{1, "JSON parse error", e.what()};
+            return ServerResponse{0, "JSON parse error", e.what()};
         } catch (const std::exception &e) {
-            return ServerResponse{1, "Error", e.what()};
+            return ServerResponse{0, "Error", e.what()};
         }
     }
 };
@@ -203,14 +198,14 @@ public:
 
     ServerResponse execute() override {
         if (!session.isAuthenticated()) {
-            return ServerResponse{1, "Not authenticated", ""};
+            return ServerResponse{0, "Not authenticated", ""};
         }
 
         try {
             std::filesystem::path primary_dir = session.getUserDirectory() / "primary";
 
             if (!std::filesystem::exists(primary_dir)) {
-                return ServerResponse{1, "User directory not found", ""};
+                return ServerResponse{0, "User directory not found", ""};
             }
 
             CloudDir root = buildDir(primary_dir, primary_dir);
@@ -218,9 +213,11 @@ public:
             json j = root;
             std::string json_str = j.dump();
 
-            return ServerResponse{0, "List Successful", json_str};
+            std::cout << json_str << '\n';
+
+            return ServerResponse{1, "List Successful", json_str};
         } catch (const std::exception &e) {
-            return ServerResponse{1, "Error listing files", e.what()};
+            return ServerResponse{0, "Error listing files", e.what()};
         }
     }
 };

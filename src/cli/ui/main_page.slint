@@ -16,7 +16,9 @@ export component MainPage inherits Rectangle {
     callback logout();
     callback show-history();
 
-    in-out property <[File]> files: [];
+    callback update-files();
+
+    in property <[File]> files: [];
 
     background: rgba(195, 213, 235, 1);
 
@@ -34,6 +36,8 @@ export component MainPage inherits Rectangle {
                 vertical-stretch: 1;
                 drop-shadow-blur: 30px;
                 drop-shadow-color: rgba(0, 0, 0, 0.35);
+
+                files: files;
             }
 
             FileMetadataSection {

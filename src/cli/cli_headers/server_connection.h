@@ -6,8 +6,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#include "cloud_dir.h"
 #include "cloud_file.h"
+#include "server_response.h"
 
 #define BUFFER_SIZE 8192
 #define PORT 8005
@@ -28,7 +28,7 @@ private:
 
     ServerConnection &operator=(const ServerConnection &) = delete;
 
-    bool sendToServer(std::string msg) {
+    ServerResponse sendToServer(std::string msg) {
         int len = msg.length();
         ssize_t sent = send(sock, &len, sizeof(int), 0);
         if (sent < 0) {
@@ -36,34 +36,34 @@ private:
         }
         sent = send(sock, msg.c_str(), msg.length(), 0);
         std::cout << "Trimis la server: " << msg << '\n';
-        return (sent == msg.length());
+
+        return {sent == msg.length() ? 1 : 0, sent == msg.length() ? "Sent successfully\n" : "Failed to send\n", ""};
     }
 
-    bool receiveStatus() {
+    ServerResponse receiveStatus() {
         int size;
         if (recv(sock, &size, sizeof(int), 0) != sizeof(int)) {
-            std::cerr << "Eroare la primirea dimensiunii status\n";
-            return false;
+            return {0, "Eroare la primirea dimensiunii status\n", ""};
         }
 
         if (size <= 0 || size >= BUFFER_SIZE) {
-            std::cerr << "Dimensiune status invalidă: " << size << "\n";
-            return false;
+            std::stringstream s;
+            s << "Invalid Status Size: " << size << "\n";
+            std::string err = s.str();
+
+            return {0, err, ""};
         }
 
         char buffer[BUFFER_SIZE];
         int received = recv(sock, buffer, size, 0);
         if (received != size) {
-            std::cerr << "Eroare la primirea status-ului\n";
-            return false;
+            return {0, "Eroare la primirea status-ului\n", ""};
         }
 
         buffer[size] = '\0';
         std::string status(buffer);
 
-        std::cout << "Status primit: " << status << "\n";
-
-        return status == "SUCC";
+        return {(status == "SUCC" ? 1 : 0), status, ""};
     }
 
 public:
@@ -76,16 +76,16 @@ public:
         disconnect();
     }
 
-    bool connect() {
+    ServerResponse connect() {
         if (isConnected) {
-            std::cout << "Deja conectat\n";
-            return true;
+            std::string err = "Deja conectat\n";
+            return {0, err, ""};
         }
 
         sock = socket(AF_INET, SOCK_STREAM, 0);
         if (sock < 0) {
-            std::cout << "Eroare la crearea socket-ului\n";
-            return false;
+            std::string err = "Eroare la crearea socket-ului\n";
+            return {0, err, ""};
         }
 
         sockaddr_in serverAddr{};
@@ -94,14 +94,14 @@ public:
         serverAddr.sin_addr.s_addr = inet_addr(IP);
 
         if (::connect(sock, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr)) < 0) {
-            std::cout << "Eroare la connect\n";
+            std::string err = "Eroare la connect\n";
             close(sock);
-            return false;
+            return {0, err, ""};
         }
-        std::cout << "Client-ul s-a conectat!\n";
+        std::string status = "Client-ul s-a conectat!\n";
         isConnected = true;
 
-        return true;
+        return {1, status, ""};
     }
 
     void disconnect() {
@@ -117,10 +117,10 @@ public:
         return isConnected;
     }
 
-    bool login(std::string user, std::string passwd) {
+    ServerResponse login(std::string user, std::string passwd) {
         if (sock < 0 || !isConnected) {
-            std::cout << "You're not connected...\n";
-            return false;
+            std::string err = "You're not connected...\n";
+            return {0, err, ""};
         }
 
         this->user = user;
@@ -132,28 +132,29 @@ public:
         return receiveStatus();
     }
 
-    bool logout() {
+    ServerResponse logout() {
         std::string cmd = "LOGOUT";
         sendToServer(cmd);
         return receiveStatus();
     }
 
-    bool get(std::string file) {
+    ServerResponse get(std::string file) {
         std::string cmd = "GET " + file;
         sendToServer(cmd);
         return receiveStatus();
     }
 
-    bool post(std::string file_path) {
+    ServerResponse post(std::string file_path) {
         if (sock < 0 || !isConnected) {
-            std::cout << "Nu esti conectat la server\n";
-            return false;
+            std::string err = "You're not connected...\n";
+            return {0, err, ""};
         }
 
         try {
             if (!std::filesystem::exists(file_path)) {
-                std::cerr << "Fisierul nu exista: " << file_path << '\n';
-                return false;
+                std::string err = "File doesn't exist" + file_path;
+                err += '\n';
+                return {0, err, ""};
             }
 
             std::filesystem::path path(file_path);
@@ -174,41 +175,41 @@ public:
             int size = 0;
             ssize_t received = recv(sock, &size, sizeof(int), 0);
             if (received < 0) {
-                std::cerr << "Eroare la primirea confirmarii!\n";
-                return false;
+                std::string err = "Error getting payload size!\n";
+                return {0, err, ""};
             }
 
             memset(buffer, 0, BUFFER_SIZE);
             received = recv(sock, buffer, size, 0);
             if (received != size) {
-                std::cerr << "Eroare la primirea confirmarii complete\n";
-                return false;
+                std::string err = "Error getting payload!\n";
+                return {0, err, ""};
             }
 
             std::string response(buffer);
             if (response != "READY") {
-                std::cerr << "Serverul nu este gata sa primeasca fisierul: " << response << '\n';
-                return false;
+                std::string err = "Server not ready to get file: " + response;
+                err += '\n';
+                return {0, err, ""};
             }
 
             std::ifstream file(file_path, std::ios::binary);
             if (!file.is_open()) {
-                std::cerr << "Nu pot deschide fisierul pentru citire\n";
-                return false;
+                std::string err = "Can't open file for reading\n";
+                return {0, err, ""};
             }
 
             char file_buffer[BUFFER_SIZE];
             size_t total_sent = 0;
-            size_t file_size = fileToSend.size;
 
             while (file.read(file_buffer, sizeof(file_buffer)) || file.gcount() > 0) {
                 size_t bytes_to_send = file.gcount();
                 ssize_t sent = send(sock, file_buffer, bytes_to_send, 0);
 
                 if (sent < 0) {
-                    std::cerr << "Eroare la trimiterea datelor fisierului\n";
+                    std::string err = "Error sending file data to server\n";
                     file.close();
-                    return false;
+                    return {0, err, ""};
                 }
 
                 total_sent += sent;
@@ -218,31 +219,36 @@ public:
 
             return receiveStatus();
         } catch (const std::exception &e) {
-            std::cerr << "Eroare: " << e.what() << '\n';
-            return false;
+            std::string err = "Error: ";
+            err += e.what();
+            err += '\n';
+            return {0, err, ""};
         }
     }
 
-    bool list() {
+    ServerResponse list() {
         std::string cmd = "LIST";
         sendToServer(cmd);
 
-        bool status = receiveStatus();
+        auto status = receiveStatus();
 
-        if (!status) {
-            std::cerr << "Comanda LIST a eșuat\n";
-            return false;
+        if (!status.status_code) {
+            std::string err = "LIST command failed\n";
+            return {0, err, ""};
         }
 
         int json_size;
         if (recv(sock, &json_size, sizeof(int), 0) != sizeof(int)) {
-            std::cerr << "Eroare la primirea dimensiunii JSON\n";
-            return false;
+            std::string err = "Error JSON doesn't match received size\n";
+            return {0, err, ""};
         }
 
         if (json_size <= 0 || json_size >= BUFFER_SIZE) {
-            std::cerr << "Dimensiune JSON invalidă: " << json_size << "\n";
-            return false;
+            std::stringstream s;
+            s << "Invalid JSON size: " << json_size << "\n";
+            std::string err = s.str();
+
+            return {0, err, ""};
         }
 
         std::cout << "Primesc JSON de " << json_size << " bytes\n";
@@ -258,8 +264,8 @@ public:
             }
             int received = recv(sock, buffer + total_received, bytes_to_read, 0);
             if (received <= 0) {
-                std::cerr << "Eroare la primirea JSON-ului\n";
-                return false;
+                std::string err = "Error getting JSON\n";
+                return {0, err, ""};
             }
             total_received += received;
         }
@@ -267,24 +273,7 @@ public:
         buffer[total_received] = '\0';
         std::string json_str(buffer);
 
-        std::cout << "JSON primit: " << json_str.substr(0, 100) << "...\n";
-
-        try {
-            json j = json::parse(json_str);
-            CloudDir root = j.get<CloudDir>();
-
-            std::cout << "\n=== Structura Cloud Storage ===\n";
-            std::cout << json_str << '\n';
-
-            return true;
-        } catch (const json::parse_error &e) {
-            std::cerr << "Eroare la parsarea JSON: " << e.what() << "\n";
-            std::cerr << "JSON primit: " << json_str << "\n";
-            return false;
-        } catch (const std::exception &e) {
-            std::cerr << "Eroare: " << e.what() << "\n";
-            return false;
-        }
+        return {1, "Updated file tree successfully", json_str};
     }
 };
 

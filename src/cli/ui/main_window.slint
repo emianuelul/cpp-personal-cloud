@@ -7,6 +7,8 @@ import {
 import { MyButton } from "my_button.slint";
 import { LoginScreen } from "login_screen.slint";
 import { MainPage } from "main_page.slint";
+import { FileExplorer, File } from "file_explorer.slint";
+
 
 export component MainWindow inherits Window {
     title: "Personal Cloud";
@@ -17,11 +19,15 @@ export component MainWindow inherits Window {
     preferred-width: 1400px;
     preferred-height: 800px;
 
+    in property <[File]> files: [];
+
     callback try-login(string, string);
 
     callback get(string);
     callback post();
     callback logout();
+
+    callback update-files();
 
     in-out property <bool> is-logged: false;
 
@@ -34,6 +40,7 @@ export component MainWindow inherits Window {
     }
 
     if is-logged: MainPage {
+        files: root.files;
         get(file-path) => {
             root.get(file-path);
         }
@@ -42,6 +49,9 @@ export component MainWindow inherits Window {
         }
         logout => {
             root.logout();
+        }
+        update-files => {
+            root.update-files();
         }
     }
 }

@@ -6,7 +6,7 @@
 using json = nlohmann::json;
 
 struct CloudFile {
-    unsigned long long size = 0.0;
+    unsigned long long size = 0;
     std::string name;
 };
 

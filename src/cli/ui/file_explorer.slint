@@ -1,22 +1,17 @@
 import { FileCard } from "file_card.slint";
 import { ScrollView } from "std-widgets.slint";
 import { MyButton } from "my_button.slint";
+
 export struct File {
     name: string,
-    size: float,
-    date: string,
+    size: string,
 }
 
 export component FileExplorer inherits Rectangle {
 
     background: white;
 
-    in property <[File]> files: [
-        { name: "proiect_webdev.zip", size: 156.4, date: "28/11/2025" },
-        { name: "main.cpp", size: 0.02, date: "15/12/2025" },
-        { name: "curs_python.mp4", size: 850.5, date: "02/01/2026" },
-        { name: "structuri_date.pdf", size: 12.3, date: "10/01/2026" }
-    ];
+    in property <[File]> files: [];
 
     property <int> gap: 12;
 
@@ -29,11 +24,20 @@ export component FileExplorer inherits Rectangle {
 
             spacing: gap * 1px;
 
+            if (files.length == 0): Text {
+                text: "No files :^)";
+                font-size: 24px;
+                font-weight: 600;
+                color: rgba(0,0,0,0.5);
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+
             for file[i] in files: VerticalLayout {
                 FileCard {
                     name: file.name;
                     size: file.size;
-                    date: file.date;
+                    date: "dd/mm/yyyy";
                 }
 
                 spacing: gap * 1px;

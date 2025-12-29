@@ -47,8 +47,7 @@ private:
                             std::unique_ptr<Command> command = CommandFactory::createCommand(cmd, this->fd, session);
                             ServerResponse resp = command->execute();
 
-                            // status_code == 0 înseamnă SUCCESS
-                            if (resp.status_code == 0) {
+                            if (resp.status_code) {
                                 std::cout << "SUCCESS: " << resp.status_message << '\n';
                                 succ = true;
                                 response_json = resp.response_data_json;
