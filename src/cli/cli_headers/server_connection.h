@@ -218,6 +218,12 @@ public:
             return false;
         }
     }
+
+    bool list() {
+        std::string cmd = "LIST";
+        sendToServer(cmd);
+        return receiveStatus();
+    }
 };
 
 #endif //CPP_PERSONAL_CLOUD_COMMAND_HANDLER_H

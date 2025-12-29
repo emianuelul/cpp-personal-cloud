@@ -8,12 +8,14 @@
 
 #include "utility_functions.h"
 #include "command_handlers.h"
+#include "user_session.h"
 
 #define BUFFER_SIZE 2048
 
 class ClientWorker {
 private:
     int fd;
+    UserSession session;
 
     void processClientCommands() {
         while (true) {
@@ -40,7 +42,7 @@ private:
 
                         bool succ = false;
                         try {
-                            std::unique_ptr<Command> command = CommandFactory::createCommand(cmd, this->fd);
+                            std::unique_ptr<Command> command = CommandFactory::createCommand(cmd, this->fd, session);
                             ServerResponse resp = command->execute();
                             std::cout << "SUCCESS: " << resp.status_message << '\n';
                             succ = true;

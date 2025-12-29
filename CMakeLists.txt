@@ -20,6 +20,7 @@ add_executable(server_exec
         src/srv/sv_headers/command_handlers.h
         include/utility_functions.h
         include/cloud_file.h
+        include/cloud_dir.h
 )
 
 target_include_directories(server_exec PRIVATE
@@ -33,6 +34,8 @@ add_executable(client_exec
         src/cli/client.cpp
         include/cloud_file.h
         src/cli/cli_headers/server_connection.h
+        src/srv/sv_headers/user_session.h
+        include/cloud_dir.h
 )
 
 slint_target_sources(client_exec src/cli/ui/main_window.slint)

@@ -7,6 +7,10 @@ export component ActionPanel inherits Rectangle {
 
     preferred-width: 900px;
 
+    callback logout();
+    callback show-history();
+    callback post();
+
     HorizontalLayout {
 
         padding: 8px;
@@ -18,6 +22,10 @@ export component ActionPanel inherits Rectangle {
             text: "View History";
             static-bg: rgba(82, 159, 247, 0.1);
             hover-bg: rgba(82, 159, 247, 0.2);
+
+            clicked => {
+                show-history();
+            }
         }
 
         MyButton {
@@ -27,6 +35,10 @@ export component ActionPanel inherits Rectangle {
             bold: true;
             static-bg: rgba(82, 159, 247, 0.25);
             hover-bg: rgba(82, 159, 247, 0.5);
+
+            clicked => {
+                post();
+            }
         }
 
         MyButton {
@@ -34,6 +46,10 @@ export component ActionPanel inherits Rectangle {
             text: "Log Out";
             static-bg: rgba(82, 159, 247, 0.1);
             hover-bg: rgba(82, 159, 247, 0.2);
+
+            clicked => {
+                logout();
+            }
         }
     }
 }

@@ -23,7 +23,9 @@ export component MainWindow inherits Window {
     callback post();
     callback logout();
 
-    in-out property <bool> is-logged: true;
+    in-out property <bool> is-logged: false;
+
+    background: white;
 
     if !is-logged: LoginScreen {
         try-login(name, passwd) => {

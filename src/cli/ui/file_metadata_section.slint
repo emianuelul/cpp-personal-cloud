@@ -11,6 +11,9 @@ export component FileMetadataSection inherits Rectangle {
     border-radius: 16px;
     max-width: 320px;
 
+    callback get(string);
+    callback delete(string);
+
     ScrollView {
         VerticalLayout {
             alignment: start;
@@ -77,6 +80,10 @@ export component FileMetadataSection inherits Rectangle {
                 static-bg: rgba(79, 232, 171, 0.25);
                 hover-bg: rgba(79, 232, 171, 0.5);
                 fontsize: 20;
+
+                clicked => {
+                    get("fisier.png");
+                }
             }
 
             MyButton {
@@ -84,6 +91,10 @@ export component FileMetadataSection inherits Rectangle {
                 static-bg: rgba(232, 79, 79, 0.25);
                 hover-bg: rgba(232, 79, 79, 0.5);
                 fontsize: 20;
+
+                clicked => {
+                    delete("fisier.png");
+                }
             }
         }
     }

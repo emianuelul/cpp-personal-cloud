@@ -11,8 +11,10 @@ import { ActionPanel } from "action_panel.slint";
 
 export component MainPage inherits Rectangle {
     callback get(string);
+    callback delete(string);
     callback post();
     callback logout();
+    callback show-history();
 
     in-out property <[File]> files: [];
 
@@ -38,6 +40,14 @@ export component MainPage inherits Rectangle {
                 vertical-stretch: 1;
                 drop-shadow-blur: 30px;
                 drop-shadow-color: rgba(0, 0, 0, 0.35);
+
+                get(path) => {
+                    get(path);
+                }
+
+                delete(path) => {
+                    delete(path);
+                }
             }
         }
 
@@ -48,6 +58,18 @@ export component MainPage inherits Rectangle {
             ActionPanel {
                 drop-shadow-blur: 30px;
                 drop-shadow-color: rgba(0, 0, 0, 0.35);
+
+                logout => {
+                    logout();
+                }
+
+                post => {
+                    post();
+                }
+
+                show-history => {
+                    show-history();
+                }
             }
         }
     }

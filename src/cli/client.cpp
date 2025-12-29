@@ -10,11 +10,9 @@
 #include "portable-file-dialogs.h"
 #include "cli_headers/server_connection.h"
 
-
 #define BUFFER_SIZE 8192
 
 using json = nlohmann::json;
-
 
 int main(int argc, char *argv[]) {
     auto &server = ServerConnection::getInstance();

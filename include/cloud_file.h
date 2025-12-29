@@ -10,14 +10,14 @@ struct CloudFile {
     std::string name;
 };
 
-void to_json(json &j, const CloudFile &p) {
+inline void to_json(json &j, const CloudFile &p) {
     j = json{
         {"size", p.size},
         {"name", p.name},
     };
 }
 
-void from_json(const json &j, CloudFile &p) {
+inline void from_json(const json &j, CloudFile &p) {
     j.at("size").get_to(p.size);
     j.at("name").get_to(p.name);
 }
