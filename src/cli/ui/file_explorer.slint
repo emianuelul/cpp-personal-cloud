@@ -4,18 +4,19 @@ import { MyButton } from "my_button.slint";
 
 export struct File {
     name: string,
+    path: string,
     size: string,
 }
 
 export component FileExplorer inherits Rectangle {
-
-    background: white;
-
     in property <[File]> files: [];
+
+    callback update-metadata(string, string, string);
 
     property <int> gap: 12;
 
     border-radius: 16px;
+    background: white;
 
     ScrollView {
 
@@ -36,8 +37,13 @@ export component FileExplorer inherits Rectangle {
             for file[i] in files: VerticalLayout {
                 FileCard {
                     name: file.name;
+                    path: file.path;
                     size: file.size;
                     date: "dd/mm/yyyy";
+
+                    clicked => {
+                        update-metadata(self.name, self.path, self.size);
+                    }
                 }
 
                 spacing: gap * 1px;

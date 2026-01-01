@@ -17,8 +17,10 @@ export component MainPage inherits Rectangle {
     callback show-history();
 
     callback update-files();
+    callback update-metadata(int);
 
     in property <[File]> files: [];
+    in property <int> file_index: 0;
 
     background: rgba(195, 213, 235, 1);
 
@@ -28,7 +30,6 @@ export component MainPage inherits Rectangle {
 
         HorizontalLayout {
             vertical-stretch: 1;
-            max-height: parent.height - 120px;
             spacing: 16px;
             padding: 16px;
 
@@ -38,9 +39,15 @@ export component MainPage inherits Rectangle {
                 drop-shadow-color: rgba(0, 0, 0, 0.35);
 
                 files: files;
+
+                update-metadata(name, path, size) => {
+                    metadata-section.file-name = name;
+                    metadata-section.path = path;
+                    metadata-section.size = size;
+                }
             }
 
-            FileMetadataSection {
+            metadata-section := FileMetadataSection {
                 vertical-stretch: 1;
                 drop-shadow-blur: 30px;
                 drop-shadow-color: rgba(0, 0, 0, 0.35);

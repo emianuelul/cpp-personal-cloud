@@ -1,11 +1,12 @@
 import { MyButton } from "my_button.slint";
 import { VerticalSpacer } from "spacers.slint";
 import { ScrollView } from "std-widgets.slint";
+import { File } from "file_explorer.slint";
 
 export component FileMetadataSection inherits Rectangle {
     in-out property <string> file-name: "picture.jpg";
     in-out property <string> path: "home/pictures/picture.jpg";
-    in-out property <float> size: 6.7;
+    in-out property <string> size: "6.7MB";
 
     background: white;
     border-radius: 16px;

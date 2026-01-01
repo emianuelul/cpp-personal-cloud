@@ -39,15 +39,18 @@ void refresh_file_list(slint::ComponentHandle<MainWindow> ui_handle) {
             return;
 
         std::vector<CloudFile> cloud_files;
+        std::string parent_folder;
 
         try {
             auto j = json::parse(response.response_data_json);
             cloud_files = j.at("files").get<std::vector<CloudFile> >();
+            parent_folder = j.at("path").get<std::string>();
         } catch (...) {
             return;
         }
 
-        slint::invoke_from_event_loop([ui_handle, cloud_files]() {
+        parent_folder += '/';
+        slint::invoke_from_event_loop([ui_handle, cloud_files, parent_folder]() {
             auto *ui = ui_handle.operator->();
             if (!ui) return;
 
@@ -56,8 +59,11 @@ void refresh_file_list(slint::ComponentHandle<MainWindow> ui_handle) {
 
             for (const auto &f: cloud_files) {
                 std::string formatted = format_bits(f.size);
+                std::string path = parent_folder + f.name;
+
                 files_model->push_back(File{
                     slint::SharedString(f.name),
+                    slint::SharedString(path),
                     slint::SharedString(formatted),
                 });
             }

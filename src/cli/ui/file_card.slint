@@ -1,54 +1,61 @@
 import { HorizontalSpacer } from "spacers.slint";
-export component FileCard inherits Rectangle {
+export component FileCard inherits TouchArea {
     in property <string> name: "name.type";
     in property <string> size: "6.5MB";
     in property <string> date: "dd/mm/yyyy";
+    in property <string> path: "";
 
-    HorizontalLayout {
+    mouse-cursor: pointer;
 
-        spacing: 32px;
+    Rectangle {
+        background: parent.has-hover ? rgba(225, 235, 242, 1) : rgba(225, 235, 242, 1);
 
         HorizontalLayout {
-            alignment: start;
-            vertical-stretch: 0;
-            horizontal-stretch: 0;
-            Rectangle {
-                height: 32px;
-                width: 32px;
-                background: white;
-                border-width: 2px;
-                border-color: black;
+
+            spacing: 32px;
+
+            HorizontalLayout {
+                alignment: start;
+                vertical-stretch: 0;
+                horizontal-stretch: 0;
+                Rectangle {
+                    height: 32px;
+                    width: 32px;
+                    background: white;
+                    border-width: 2px;
+                    border-color: black;
+                }
             }
-        }
 
-        Text {
-            text: name;
-            font-size: 24px;
-            font-weight: 600;
-            horizontal-alignment: left;
-            vertical-alignment: center;
+            Text {
+                text: name;
+                font-size: 24px;
+                font-weight: 600;
+                horizontal-alignment: left;
+                vertical-alignment: center;
 
-            color: black;
-        }
+                color: black;
+            }
 
-        HorizontalSpacer { }
+            HorizontalSpacer { }
 
-        Text {
-            text: size;
-            font-size: 24px;
-            horizontal-alignment: left;
-            vertical-alignment: center;
+            Text {
+                text: size;
+                font-size: 24px;
+                horizontal-alignment: left;
+                vertical-alignment: center;
 
-            color: rgba(0,0,0,0.5);
-        }
+                color: rgba(0,0,0,0.5);
+            }
 
-        Text {
-            text: date;
-            font-size: 24px;
-            horizontal-alignment: left;
-            vertical-alignment: center;
+            Text {
+                text: date;
+                font-size: 24px;
+                horizontal-alignment: left;
+                vertical-alignment: center;
 
-            color: rgba(0,0,0,0.5);
+                color: rgba(0,0,0,0.5);
+            }
         }
     }
 }
