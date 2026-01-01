@@ -7,9 +7,9 @@ export component ActionPanel inherits Rectangle {
 
     preferred-width: 900px;
 
-    callback logout();
     callback create-dir();
     callback post();
+    callback backup();
 
     HorizontalLayout {
 
@@ -43,13 +43,9 @@ export component ActionPanel inherits Rectangle {
 
         MyButton {
             horizontal-stretch: 0.25;
-            text: "Log Out";
+            text: "Backup";
             static-bg: rgba(82, 159, 247, 0.1);
             hover-bg: rgba(82, 159, 247, 0.2);
-
-            clicked => {
-                logout();
-            }
         }
     }
 }

@@ -4,19 +4,33 @@ import { ScrollView } from "std-widgets.slint";
 import { File } from "file_explorer.slint";
 
 export component FileMetadataSection inherits Rectangle {
-    in-out property <string> file-name: "picture.jpg";
-    in-out property <string> path: "home/pictures/picture.jpg";
-    in-out property <string> size: "6.7MB";
+    in-out property <string> file-name: "-";
+    in-out property <string> path: "-";
+    in-out property <string> size: "-";
 
     background: white;
     border-radius: 16px;
-    max-width: 320px;
+    max-width: 420px;
 
     callback get(string);
     callback delete(string);
 
     ScrollView {
-        VerticalLayout {
+
+        if (file-name == "-" && path == "-" && size == "-"): VerticalLayout {
+            alignment: center;
+            spacing: 10px;
+
+            Text {
+                text: "Click a file for more info";
+                font-size: 18px;
+                font-weight: 500;
+                color: rgba(0,0,0,0.4);
+                horizontal-alignment: center;
+            }
+        }
+
+        if(file-name != "-" || path != "-" || size != "-"):VerticalLayout {
             alignment: start;
             padding: 40px;
             spacing: 24px;
