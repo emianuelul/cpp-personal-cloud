@@ -8,7 +8,7 @@ export component ActionPanel inherits Rectangle {
     preferred-width: 900px;
 
     callback logout();
-    callback show-history();
+    callback create-dir();
     callback post();
 
     HorizontalLayout {
@@ -19,12 +19,12 @@ export component ActionPanel inherits Rectangle {
 
         MyButton {
             horizontal-stretch: 0.25;
-            text: "View History";
+            text: "Create Directory";
             static-bg: rgba(82, 159, 247, 0.1);
             hover-bg: rgba(82, 159, 247, 0.2);
 
             clicked => {
-                show-history();
+                create-dir();
             }
         }
 

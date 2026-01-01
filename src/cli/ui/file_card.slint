@@ -8,10 +8,15 @@ export component FileCard inherits TouchArea {
     mouse-cursor: pointer;
 
     Rectangle {
-        background: parent.has-hover ? rgba(225, 235, 242, 1) : rgba(225, 235, 242, 1);
+        background: parent.has-hover ? rgba(225, 235, 242, 1) : rgba(256, 256, 256, 1);
+        border-radius: 12px;
+        animate background {
+            duration: 150ms;
+            easing: ease-out;
+        }
 
         HorizontalLayout {
-
+            padding: 12px;
             spacing: 32px;
 
             HorizontalLayout {

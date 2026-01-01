@@ -167,6 +167,29 @@ int main(int argc, char *argv[]) {
         refresh_file_list(ui_handle);
     });
 
+    ui->on_delete([ui_handle](slint::SharedString path) {
+        std::thread network_thread([path, ui_handle]() {
+            std::string process_path = path.data();
+            process_path.erase(0, 1);
+
+            std::cout << process_path << '\n';
+
+            ServerResponse response =
+                    ServerConnection::getInstance().delete_file(process_path);
+
+            slint::invoke_from_event_loop([ui_handle, response]() {
+                if (response.status_code == 1) {
+                    std::cout << "Fisier sters cu succes!\n";
+                    refresh_file_list(ui_handle);
+                } else {
+                    std::cout << "DELETE esuat de la server.\n";
+                }
+            });
+        });
+
+        network_thread.detach();
+    });
+
     ui->run();
 
     return 0;

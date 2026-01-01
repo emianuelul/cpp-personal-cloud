@@ -14,7 +14,7 @@ export component MainPage inherits Rectangle {
     callback delete(string);
     callback post();
     callback logout();
-    callback show-history();
+    callback create-dir();
 
     callback update-files();
     callback update-metadata(int);
@@ -78,8 +78,8 @@ export component MainPage inherits Rectangle {
                     post();
                 }
 
-                show-history => {
-                    show-history();
+                create-dir => {
+                    create-dir();
                 }
             }
         }

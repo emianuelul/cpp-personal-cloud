@@ -76,6 +76,10 @@ public:
         disconnect();
     }
 
+    std::string getUser() {
+        return this->user;
+    }
+
     ServerResponse connect() {
         if (isConnected) {
             std::string err = "Deja conectat\n";
@@ -224,6 +228,19 @@ public:
             err += '\n';
             return {0, err, ""};
         }
+    }
+
+    ServerResponse delete_file(std::string path) {
+        std::string cmd = "DELETE " + path;
+        sendToServer(cmd);
+
+        auto status = receiveStatus();
+        if (!status.status_code) {
+            std::string err = "DELETE command failed\n";
+            return {0, err, ""};
+        }
+
+        return {1, "DELETED successfully", ""};
     }
 
     ServerResponse list() {

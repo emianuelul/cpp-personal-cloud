@@ -222,6 +222,33 @@ public:
     }
 };
 
+class DeleteCommand : public Command {
+private:
+    std::string path;
+    UserSession &session;
+
+public:
+    DeleteCommand(std::string path, UserSession &session) : path(path), session(session) {
+    }
+
+    ServerResponse execute() override {
+        try {
+            std::filesystem::path primary_p = session.getUserDirectory() / "primary" / path;
+            std::filesystem::path backup_p = session.getUserDirectory() / "backup" / path;
+
+            bool deleted_primary = std::filesystem::remove(primary_p);
+            std::filesystem::remove(backup_p);
+
+            if (deleted_primary) {
+                return ServerResponse{1, "Deleted successfully", ""};
+            } else {
+                return ServerResponse{0, "File not found in primary storage", ""};
+            }
+        } catch (const std::filesystem::filesystem_error &e) {
+            return ServerResponse{0, e.what(), ""};
+        }
+    }
+};
 
 class CommandFactory {
 public:
@@ -238,8 +265,10 @@ public:
             return std::make_unique<GetCommand>(arguments[0], session);
         } else if (command.find("POST") == 0) {
             return std::make_unique<PostCommand>(arguments[0], client_sock, session);
-        } else if (command.find("LIST" == 0)) {
+        } else if (command.find("LIST") == 0) {
             return std::make_unique<ListCommand>(session);
+        } else if (command.find("DELETE") == 0) {
+            return std::make_unique<DeleteCommand>(arguments[0], session);
         } else {
             throw std::runtime_error("Comanda Invalida");
         }

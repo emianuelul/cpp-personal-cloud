@@ -26,6 +26,7 @@ export component MainWindow inherits Window {
     callback get(string);
     callback post();
     callback logout();
+    callback delete(string);
 
     callback update-files();
 
@@ -52,6 +53,9 @@ export component MainWindow inherits Window {
         }
         update-files => {
             root.update-files();
+        }
+        delete(path) => {
+            delete(path);
         }
     }
 }

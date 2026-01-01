@@ -9,7 +9,13 @@ export struct File {
 }
 
 export component FileExplorer inherits Rectangle {
-    in property <[File]> files: [];
+    in property <[File]> files: [
+        { name: "vacation_photo.jpg", path: "/home/user/pictures", size: "2.4 MB" },
+        { name: "report_2024.pdf", path: "/home/user/documents", size: "1.8 MB" },
+        { name: "presentation.pptx", path: "/home/user/work", size: "5.2 MB" },
+        { name: "music_playlist.mp3", path: "/home/user/music", size: "3.7 MB" },
+        { name: "budget_sheet.xlsx", path: "/home/user/finance", size: "892 KB" },
+    ];
 
     callback update-metadata(string, string, string);
 

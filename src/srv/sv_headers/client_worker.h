@@ -25,7 +25,7 @@ private:
 
             if (received == sizeof(int)) {
                 if (size <= 0 || size >= BUFFER_SIZE) {
-                    std::cerr << "Dimensiune invalidă primită: " << size << "\n";
+                    std::cerr << "Dimensiune invalida primita: " << size << "\n";
                     std::string msgBack = "FAIL";
 
                     int msgSize = msgBack.length();
@@ -74,7 +74,7 @@ private:
                             std::cout << "Sent JSON response: " << jsonSize << " bytes\n";
                         }
                     } else {
-                        std::cerr << "Eroare la primire mesaj: așteptat " << size << ", primit " << received << "\n";
+                        std::cerr << "Eroare la primire mesaj: asteptat " << size << ", primit " << received << "\n";
                     }
                 }
             } else if (received == 0) {
