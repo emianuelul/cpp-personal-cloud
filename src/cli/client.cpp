@@ -75,6 +75,13 @@ void refresh_file_list(slint::ComponentHandle<MainWindow> ui_handle) {
     network_thread.detach();
 }
 
+void show_status(ServerResponse resp) {
+    std::cout << "\n===== COMMAND STATUS =====\n";
+    std::cout << "Code: " << resp.status_code << '\n';
+    std::cout << "Msg: " << resp.status_message << '\n';
+    std::cout << "Received JSON: " << resp.response_data_json << "\n\n";
+}
+
 int main(int argc, char *argv[]) {
     auto &server = ServerConnection::getInstance();
 
@@ -87,13 +94,23 @@ int main(int argc, char *argv[]) {
 
     slint::ComponentHandle<MainWindow> ui_handle(ui);
 
-    ui->on_get([](slint::SharedString file_path) {
-        std::thread network_thread([file_path]() {
-            ServerResponse response = ServerConnection::getInstance().get(file_path.data());
+    ui->on_get([ui_handle](slint::SharedString path) {
+        std::thread network_thread([path, ui_handle]() {
+            std::string process_path = path.data();
+            process_path.erase(0, 1);
 
-            if (response.status_code == 0) {
-                std::cout << "Get esuat de la server.\n";
-            }
+            ServerResponse response =
+                    ServerConnection::getInstance().get(process_path);
+
+            show_status(response);
+
+            slint::invoke_from_event_loop([ui_handle, response]() {
+                if (response.status_code == 1) {
+                    std::cout << "Successfully downloaded file!\n";
+                } else {
+                    std::cout << "Failed to get file from server\n";
+                }
+            });
         });
 
         network_thread.detach();
@@ -171,8 +188,6 @@ int main(int argc, char *argv[]) {
         std::thread network_thread([path, ui_handle]() {
             std::string process_path = path.data();
             process_path.erase(0, 1);
-
-            std::cout << process_path << '\n';
 
             ServerResponse response =
                     ServerConnection::getInstance().delete_file(process_path);

@@ -20,6 +20,7 @@ private:
     bool isConnected;
     std::string user;
     std::string pass;
+    std::filesystem::path user_dir;
 
     ServerConnection() : sock(-1), isConnected(false) {
     }
@@ -133,6 +134,24 @@ public:
         std::string cmd = "LOGIN " + user + " " + passwd;
         sendToServer(cmd);
 
+
+        if (!std::filesystem::exists("./cloud_downloads")) {
+            if (std::filesystem::create_directory("./cloud_downloads")) {
+                std::cout << "Created Cloud Downloads Directory\n";
+            } else {
+                std::cout << "Failed to create Cloud Downloads Directory\n";
+            }
+        }
+        this->user_dir = std::filesystem::path("./cloud_downloads") / this->user;
+
+        if (!std::filesystem::exists(this->user_dir)) {
+            if (std::filesystem::create_directory(this->user_dir)) {
+                std::cout << "Created User Cloud Downloads Dir\n";
+            } else {
+                std::cout << "Failed to create User Cloud Downloads Dir\n";
+            }
+        }
+
         return receiveStatus();
     }
 
@@ -142,10 +161,83 @@ public:
         return receiveStatus();
     }
 
-    ServerResponse get(std::string file) {
-        std::string cmd = "GET " + file;
+    ServerResponse get(std::string path) {
+        std::string cmd = "GET " + path;
         sendToServer(cmd);
-        return receiveStatus();
+
+        int size = 0;
+        if (recv(sock, &size, sizeof(int), 0) < 0) {
+            std::cout << "Error getting payload size\n";
+            return {0, "fail", ""};
+        }
+
+        char buffer[BUFFER_SIZE];
+        memset(buffer, 0, BUFFER_SIZE);
+        if (recv(sock, buffer, size, 0) < 0) {
+            std::cout << "Error getting payload\n";
+            return {0, "fail", ""};
+        }
+
+        std::string obj_json(buffer);
+
+        try {
+            json j = json::parse(obj_json);
+            CloudFile received_file = j.get<CloudFile>();
+
+            std::filesystem::path down_dir = this->user_dir;
+
+            std::filesystem::path file_path = this->user_dir / received_file.name;
+
+            if (std::filesystem::exists(file_path)) {
+                return ServerResponse{0, "File already exists", ""};
+            }
+
+            std::ofstream primary_stream(file_path, std::ios::binary);
+
+            if (!primary_stream.is_open()) {
+                return ServerResponse{0, "Failed to create file", ""};
+            }
+
+            std::string ack = "READY";
+            size_t ack_size = ack.length();
+            send(sock, &ack_size, sizeof(int), 0);
+            send(sock, ack.c_str(), ack_size, 0);
+
+            std::cout << "Downloading file from cloud... \n";
+
+            char buffer[8192];
+            size_t total_received = 0;
+            size_t file_size = received_file.size;
+
+            while (total_received < file_size) {
+                size_t remaining = file_size - total_received;
+                size_t to_receive = (sizeof(buffer) < remaining) ? sizeof(buffer) : remaining;
+                ssize_t bytes_received = recv(sock, buffer, to_receive, 0);
+
+                if (bytes_received <= 0) {
+                    primary_stream.close();
+                    std::filesystem::remove(file_path);
+                    return ServerResponse{0, "Transfer interrupted", ""};
+                }
+
+                primary_stream.write(buffer, bytes_received);
+
+                total_received += bytes_received;
+            }
+            primary_stream.close();
+
+            std::cout << "File downloaded: " << received_file.name
+                    << " (" << total_received << " bytes)\n";
+
+            return receiveStatus();
+        } catch (const json::parse_error &e) {
+            std::cerr << e.what() << '\n';
+            return receiveStatus();
+        } catch (const std::exception &e) {
+            std::cerr << e.what() << '\n';
+
+            return receiveStatus();
+        }
     }
 
     ServerResponse post(std::string file_path) {

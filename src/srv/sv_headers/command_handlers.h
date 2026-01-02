@@ -12,6 +12,8 @@
 #include "server_response.h"
 #include "user_session.h"
 
+#define BUFFER_SIZE 8192
+
 using json = nlohmann::json;
 
 class Command {
@@ -58,11 +60,12 @@ public:
 class GetCommand : public Command {
 private:
     UserSession &session;
-    std::string filename;
+    std::string file_path;
+    int sock;
 
 public:
-    GetCommand(std::string filename, UserSession &session)
-        : filename(std::move(filename)), session(session) {
+    GetCommand(std::string file_path, UserSession &session, int sock)
+        : file_path(std::move(file_path)), session(session), sock(sock) {
     }
 
     ServerResponse execute() override {
@@ -70,8 +73,84 @@ public:
             return ServerResponse{0, "Not authenticated", ""};
         }
 
-        // TODO: Implementeaza GET
-        return ServerResponse{1, "Get Successful", ""};
+        // TODO: CORRUPTION CHECK HERE
+        this->file_path = session.getUserDirectory() / "primary" / file_path;
+        try {
+            if (!std::filesystem::exists(file_path)) {
+                std::string err = "File doesn't exist" + file_path;
+                err += '\n';
+                return {0, err, ""};
+            }
+            std::filesystem::path path(file_path);
+            CloudFile fileToSend = {
+                std::filesystem::file_size(path),
+                path.filename().string(),
+            };
+
+            json j = fileToSend;
+            std::string metadata_json = j.dump();
+
+            int json_size = metadata_json.length();
+            if (send(sock, &json_size, sizeof(int), 0) < 0) {
+                throw std::runtime_error("Error sending payload size to client");
+            }
+            if (send(sock, metadata_json.c_str(), json_size, 0) < 0) {
+                throw std::runtime_error("Error sending payload to client");
+            }
+
+            char buffer[BUFFER_SIZE];
+            memset(buffer, 0, BUFFER_SIZE);
+
+            int size = 0;
+            ssize_t received = recv(sock, &size, sizeof(int), 0);
+            if (received < 0) {
+                std::string err = "Error getting payload size!\n";
+                return {0, err, ""};
+            }
+
+            memset(buffer, 0, BUFFER_SIZE);
+            received = recv(sock, buffer, size, 0);
+            if (received != size) {
+                std::string err = "Error getting payload!\n";
+                return {0, err, ""};
+            }
+
+            std::string response(buffer);
+            if (response != "READY") {
+                std::string err = "Client not ready to get file: " + response;
+                err += '\n';
+                return {0, err, ""};
+            }
+
+            std::ifstream file(file_path, std::ios::binary);
+            if (!file.is_open()) {
+                std::string err = "Can't open file for reading\n";
+                return {0, err, ""};
+            }
+
+            char file_buffer[BUFFER_SIZE];
+            size_t total_sent = 0;
+
+            while (file.read(file_buffer, sizeof(file_buffer)) || file.gcount() > 0) {
+                size_t bytes_to_send = file.gcount();
+                ssize_t sent = send(sock, file_buffer, bytes_to_send, 0);
+                if (sent < 0) {
+                    std::string err = "Error sending file data to client\n";
+                    file.close();
+                    return {0, err, ""};
+                }
+
+                total_sent += sent;
+            }
+
+            file.close();
+            return ServerResponse{1, "Get Successful", ""};
+        } catch (const std::exception &e) {
+            std::string err = "Error: ";
+            err += e.what();
+            err += '\n';
+            return {0, err, ""};
+        }
     }
 };
 
@@ -262,7 +341,7 @@ public:
         } else if (command.find("LOGOUT") == 0) {
             return std::make_unique<LogOutCommand>(session);
         } else if (command.find("GET") == 0) {
-            return std::make_unique<GetCommand>(arguments[0], session);
+            return std::make_unique<GetCommand>(arguments[0], session, client_sock);
         } else if (command.find("POST") == 0) {
             return std::make_unique<PostCommand>(arguments[0], client_sock, session);
         } else if (command.find("LIST") == 0) {
