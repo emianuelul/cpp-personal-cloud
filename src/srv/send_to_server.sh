@@ -2,7 +2,7 @@
 
 docker run --rm -v $(pwd)/../../:/work -w /work/src/srv alpine:latest sh -c "
   apk add --no-cache g++ nlohmann-json && \
-  g++ -std=c++20 -static \
+  g++ -std=c++20 -static -lsqlite3\
   -I../../include \
   -I/usr/include \
   -o server_exec server.cpp -pthread

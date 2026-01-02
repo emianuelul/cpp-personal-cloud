@@ -9,6 +9,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/include/Slint/lib/cmake/Slint
 
 find_package(Slint REQUIRED)
 find_package(Threads REQUIRED)
+find_package(SQLite3 REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
@@ -29,6 +30,7 @@ target_include_directories(server_exec PRIVATE
 )
 
 target_link_libraries(server_exec PRIVATE Threads::Threads)
+target_link_libraries(server_exec PRIVATE SQLite::SQLite3)
 
 # --- CLIENT ---
 add_executable(client_exec
@@ -38,6 +40,8 @@ add_executable(client_exec
         src/srv/sv_headers/user_session.h
         include/cloud_dir.h
         include/server_response.h
+        src/srv/sv_headers/redundancy_manager.h
+        src/srv/sv_headers/db_manager.h
 )
 
 slint_target_sources(client_exec src/cli/ui/main_window.slint)

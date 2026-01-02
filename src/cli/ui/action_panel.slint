@@ -9,7 +9,7 @@ export component ActionPanel inherits Rectangle {
 
     callback create-dir();
     callback post();
-    callback backup();
+    callback logout();
 
     HorizontalLayout {
 
@@ -18,7 +18,7 @@ export component ActionPanel inherits Rectangle {
         spacing: 16px;
 
         MyButton {
-            horizontal-stretch: 0.25;
+            horizontal-stretch: 0.1;
             text: "Create Directory";
             static-bg: rgba(82, 159, 247, 0.1);
             hover-bg: rgba(82, 159, 247, 0.2);
@@ -29,7 +29,7 @@ export component ActionPanel inherits Rectangle {
         }
 
         MyButton {
-            horizontal-stretch: 0.25;
+            horizontal-stretch: 0.1;
             text: "Add File";
             fontsize: 24;
             bold: true;
@@ -42,10 +42,14 @@ export component ActionPanel inherits Rectangle {
         }
 
         MyButton {
-            horizontal-stretch: 0.25;
-            text: "Backup";
-            static-bg: rgba(82, 159, 247, 0.1);
-            hover-bg: rgba(82, 159, 247, 0.2);
+            horizontal-stretch: 0.1;
+            text: "Log Out";
+            static-bg: rgba(232, 116, 116, 0.25);
+            hover-bg: rgba(232, 116, 116, 0.5);
+
+            clicked => {
+                logout();
+            }
         }
     }
 }

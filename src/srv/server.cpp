@@ -5,6 +5,7 @@
 #include <thread>
 
 #include "sv_headers/client_worker.h"
+#include "sv_headers/redundancy_manager.h"
 
 #define PORT 8005
 #define BACKLOG 30
@@ -46,6 +47,9 @@ int main() {
 
 
     std::cout << "Serverul asculta pe portul: " << PORT << "\n";
+
+    std::filesystem::create_directory("./storage");
+    RedundancyManager::initDatabase();
 
     while (true) {
         int new_sock = accept(serverFd, reinterpret_cast<sockaddr *>(&serverAddr), &serverLen);

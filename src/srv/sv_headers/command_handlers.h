@@ -7,8 +7,11 @@
 #include <filesystem>
 #include <fstream>
 
+#include "picosha2.h"
 #include "cloud_dir.h"
 #include "cloud_file.h"
+#include "db_manager.h"
+#include "redundancy_manager.h"
 #include "server_response.h"
 #include "user_session.h"
 
@@ -73,11 +76,29 @@ public:
             return ServerResponse{0, "Not authenticated", ""};
         }
 
-        // TODO: CORRUPTION CHECK HERE
-        this->file_path = session.getUserDirectory() / "primary" / file_path;
+
+        std::filesystem::path primary_path = session.getUserDirectory() / "primary" / file_path;
+        std::string db_hash = RedundancyManager::getStoredHash(session.getUsername(),
+                                                               primary_path.filename().string());
+
+        std::cout << "Looking for hash of: '" << primary_path.filename() << "'\n";
+        std::cout << "Found hash: '" << db_hash << "'\n";
+
+        if (!db_hash.empty()) {
+            if (!RedundancyManager::verifyFileIntegrity(primary_path.string(), db_hash)) {
+                std::cout << "Hash mismatch! Repairing...\n";
+                std::filesystem::path backup_path = session.getUserDirectory() / "backup" / file_path;
+                RedundancyManager::repairFromBackup(primary_path.string(), backup_path.string());
+            }
+        } else {
+            std::cout << "Warning: No hash found in DB for " << file_path << "\n";
+        }
+
+        file_path = primary_path;
+
         try {
             if (!std::filesystem::exists(file_path)) {
-                std::string err = "File doesn't exist" + file_path;
+                std::string err = "File doesn't exist " + file_path;
                 err += '\n';
                 return {0, err, ""};
             }
@@ -91,35 +112,25 @@ public:
             std::string metadata_json = j.dump();
 
             int json_size = metadata_json.length();
-            if (send(sock, &json_size, sizeof(int), 0) < 0) {
-                throw std::runtime_error("Error sending payload size to client");
-            }
-            if (send(sock, metadata_json.c_str(), json_size, 0) < 0) {
-                throw std::runtime_error("Error sending payload to client");
-            }
-
-            char buffer[BUFFER_SIZE];
-            memset(buffer, 0, BUFFER_SIZE);
+            send(sock, &json_size, sizeof(int), 0);
+            send(sock, metadata_json.c_str(), json_size, 0);
 
             int size = 0;
-            ssize_t received = recv(sock, &size, sizeof(int), 0);
-            if (received < 0) {
-                std::string err = "Error getting payload size!\n";
-                return {0, err, ""};
+            if (recv(sock, &size, sizeof(int), 0) <= 0) {
+                return {0, "Client disconnected", ""};
             }
 
-            memset(buffer, 0, BUFFER_SIZE);
-            received = recv(sock, buffer, size, 0);
-            if (received != size) {
-                std::string err = "Error getting payload!\n";
-                return {0, err, ""};
+            if (size <= 0 || size > 100) {
+                return {0, "Protocol error: invalid READY size", ""};
             }
 
-            std::string response(buffer);
+            char buffer[100];
+            memset(buffer, 0, 100);
+            int bytes_rec = recv(sock, buffer, size, 0);
+
+            std::string response(buffer, bytes_rec);
             if (response != "READY") {
-                std::string err = "Client not ready to get file: " + response;
-                err += '\n';
-                return {0, err, ""};
+                return {0, "Sync error. Expected READY, got: " + response, ""};
             }
 
             std::ifstream file(file_path, std::ios::binary);
@@ -174,13 +185,14 @@ public:
             json j = json::parse(this->ObjJson);
             CloudFile received_file = j.get<CloudFile>();
 
-            std::filesystem::path primary_dir =
-                    session.getUserDirectory() / "primary";
-            std::filesystem::path backup_dir =
-                    session.getUserDirectory() / "backup";
+            std::string clean_name = received_file.name;
+            clean_name.erase(std::remove(clean_name.begin(), clean_name.end(), '"'), clean_name.end());
 
-            std::filesystem::path primary_file = primary_dir / received_file.name;
-            std::filesystem::path backup_file = backup_dir / received_file.name;
+            std::filesystem::path primary_dir = session.getUserDirectory() / "primary";
+            std::filesystem::path backup_dir = session.getUserDirectory() / "backup";
+
+            std::filesystem::path primary_file = primary_dir / clean_name;
+            std::filesystem::path backup_file = backup_dir / clean_name;
 
             if (std::filesystem::exists(primary_file)) {
                 return ServerResponse{0, "File already exists", ""};
@@ -225,6 +237,11 @@ public:
 
             primary_stream.close();
             backup_stream.close();
+
+            std::string hash = RedundancyManager::calculateHash(primary_file.string());
+            RedundancyManager::saveFileHash(session.getUsername(), primary_file.filename().string(), hash);
+            std::cout << "Saving hash for: " << primary_file.filename() << "\n";
+            std::cout << "Hash: " << hash << "\n";
 
             std::cout << "File saved with redundancy: " << received_file.name
                     << " (" << total_received << " bytes)\n";
@@ -317,6 +334,7 @@ public:
 
             bool deleted_primary = std::filesystem::remove(primary_p);
             std::filesystem::remove(backup_p);
+            DBManager::removeFile(session.getUsername(), primary_p.filename());
 
             if (deleted_primary) {
                 return ServerResponse{1, "Deleted successfully", ""};

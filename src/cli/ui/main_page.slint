@@ -71,10 +71,11 @@ export component MainPage inherits Rectangle {
             min-height: 80px;
 
             HorizontalSpacer {
-                horizontal-stretch: 0.6;
+                horizontal-stretch: 1;
             }
 
             ActionPanel {
+                horizontal-stretch: 0.1;
                 drop-shadow-blur: 30px;
                 drop-shadow-color: rgba(0, 0, 0, 0.35);
 
@@ -85,21 +86,14 @@ export component MainPage inherits Rectangle {
                 create-dir => {
                     create-dir();
                 }
-            }
 
-            HorizontalSpacer { }
-
-            MyButton {
-                horizontal-stretch: 0.1;
-                text: "Log Out";
-                static-bg: rgba(232, 116, 116, 0.25);
-                hover-bg: rgba(232, 116, 116, 0.5);
-
-                bold: true;
-
-                clicked => {
+                logout => {
                     logout();
                 }
+            }
+
+            HorizontalSpacer {
+                horizontal-stretch: 1;
             }
         }
     }

@@ -10,7 +10,6 @@
 #include "command_handlers.h"
 #include "user_session.h"
 
-#define BUFFER_SIZE 2048
 
 class ClientWorker {
 private:
@@ -52,6 +51,7 @@ private:
                                 succ = true;
                                 response_json = resp.response_data_json;
                             } else {
+                                succ = false;
                                 std::cout << "FAILED: " << resp.status_message << '\n';
                             }
                         } catch (const char *err) {

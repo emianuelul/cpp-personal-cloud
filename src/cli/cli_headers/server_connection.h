@@ -189,6 +189,13 @@ public:
             std::filesystem::path file_path = this->user_dir / received_file.name;
 
             if (std::filesystem::exists(file_path)) {
+                std::string ack = "ABORT";
+                size_t ack_size = ack.length();
+                send(sock, &ack_size, sizeof(int), 0);
+                send(sock, ack.c_str(), ack_size, 0);
+
+                auto _ = receiveStatus();
+
                 return ServerResponse{0, "File already exists", ""};
             }
 
