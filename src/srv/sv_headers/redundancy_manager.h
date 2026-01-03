@@ -24,6 +24,7 @@ public:
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, "
                 "username TEXT NOT NULL, "
                 "filename TEXT NOT NULL, "
+                "filepath TEXT NOT NULL, "
                 "hash TEXT NOT NULL, "
                 "timestamp TEXT DEFAULT (strftime('%d/%m/%Y', 'now')), "
                 "UNIQUE(username, filename)"

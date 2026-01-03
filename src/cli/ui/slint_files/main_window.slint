@@ -25,6 +25,7 @@ export component MainWindow inherits Window {
     callback post();
     callback logout();
     callback delete(string);
+    callback create-dir(string);
 
     in-out property <bool> is-logged: false;
 
@@ -67,6 +68,10 @@ export component MainWindow inherits Window {
         }
         delete(path) => {
             delete(path);
+        }
+
+        create-dir(name) => {
+            create-dir(name);
         }
     }
 }

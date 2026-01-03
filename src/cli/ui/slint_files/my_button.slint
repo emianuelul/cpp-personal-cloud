@@ -8,6 +8,7 @@ export component MyButton inherits TouchArea {
     in property <bool> bold: false;
 
     in property <int> fontsize: 16;
+    in property <color> font-color: black;
 
     mouse-cursor: pointer;
     Rectangle {
@@ -35,7 +36,7 @@ export component MyButton inherits TouchArea {
 
                 font-weight: bold ? 600 : 400;
 
-                color: black;
+                color: font-color;
 
                 wrap: word-wrap;
             }

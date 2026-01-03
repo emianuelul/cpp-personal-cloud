@@ -98,10 +98,33 @@ public:
     }
 
     void update_root(CloudDir new_root) {
+        std::string saved_path = this->curr_dir->path;
+        std::vector<std::string> saved_stack = this->path_stack;
+
         this->root = std::move(new_root);
         this->curr_dir = &this->root;
         this->path_stack.clear();
-        std::cout << "Root updated. Path is: " << this->root.path << std::endl;
+
+        if (saved_path != "/" && saved_path != this->root.path) {
+            CloudDir *target = find_dir_by_path(this->root, saved_path);
+            if (target) {
+                this->curr_dir = target;
+
+                for (const auto &stack_path: saved_stack) {
+                    if (find_dir_by_path(this->root, stack_path)) {
+                        this->path_stack.push_back(stack_path);
+                    } else {
+                        break;
+                    }
+                }
+
+                std::cout << "Restored path to: " << saved_path << std::endl;
+            } else {
+                std::cout << "Path no longer exists: " << saved_path << ", returning to root" << std::endl;
+            }
+        }
+
+        std::cout << "Root updated; Current path: " << this->curr_dir->path << std::endl;
     }
 };
 

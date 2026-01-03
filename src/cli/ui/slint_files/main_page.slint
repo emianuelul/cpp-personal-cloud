@@ -16,7 +16,7 @@ export component MainPage inherits Rectangle {
     callback delete(string);
     callback post();
     callback logout();
-    callback create-dir();
+    callback create-dir(string);
 
     callback update-metadata(int);
 
@@ -24,8 +24,12 @@ export component MainPage inherits Rectangle {
     in property <[DirEntry]> subdirs: [];
     in property <string> current-path: "/";
 
+    property <string> folder-name;
+
     callback navigate-to-dir(string);
     callback navigate-back();
+
+    property <bool> creating-dir: false;
 
     background: rgba(195, 213, 235, 1);
 
@@ -97,7 +101,7 @@ export component MainPage inherits Rectangle {
                 }
 
                 create-dir => {
-                    create-dir();
+                    creating-dir = true;
                 }
 
                 logout => {
@@ -107,6 +111,81 @@ export component MainPage inherits Rectangle {
 
             HorizontalSpacer {
                 horizontal-stretch: 1;
+            }
+        }
+    }
+
+    if(creating-dir): Rectangle {
+        background: rgba(0,0,0, 0.5);
+        height: 100%;
+        width: 100%;
+
+        VerticalLayout {
+            alignment: center;
+
+            property <string> username;
+            property <string> passwd;
+            callback try-login(string, string);
+
+            HorizontalLayout {
+                alignment: center;
+
+                Rectangle {
+                    width: 350px;
+                    background: rgba(22, 32, 64, 0.8);
+                    border-radius: 32px;
+
+                    VerticalBox {
+                        spacing: 15px;
+                        padding: 18px;
+
+                        VerticalLayout {
+                            spacing: 5px;
+                            Text {
+                                text: "Folder";
+                                font-size: 16px;
+                                color: white;
+                            }
+
+                            LineEdit {
+                                placeholder-text: "Enter Folder Name";
+                                font-size: 16px;
+                                text <=> folder-name;
+                            }
+                        }
+
+                        HorizontalLayout {
+                            spacing: 16px;
+
+                            MyButton {
+                                text: "Cancel";
+
+                                static-bg: rgba(232, 116, 116, 0.25);
+                                hover-bg: rgba(232, 116, 116, 0.5);
+
+                                font-color: white;
+
+                                clicked => {
+                                    creating-dir = false;
+                                }
+                            }
+
+                            MyButton {
+                                text: "Submit";
+
+                                static-bg: rgba(154, 252, 187, 0.25);
+                                hover-bg: rgba(154, 252, 187, 0.5);
+
+                                font-color: white;
+
+                                clicked => {
+                                    creating-dir = false;
+                                    create-dir(folder-name);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

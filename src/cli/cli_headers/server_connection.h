@@ -247,8 +247,7 @@ public:
         }
     }
 
-    // might not support folders
-    ServerResponse post(std::string file_path) {
+    ServerResponse post(std::string file_path, std::string target_dir) {
         if (sock < 0 || !isConnected) {
             std::string err = "You're not connected...\n";
             return {0, err, ""};
@@ -270,7 +269,7 @@ public:
             json j = fileToSend;
             std::string metadata_json = j.dump();
 
-            std::string cmd = "POST " + metadata_json;
+            std::string cmd = "POST " + metadata_json + " " + target_dir;
             sendToServer(cmd);
 
             char buffer[BUFFER_SIZE];
@@ -391,6 +390,13 @@ public:
         std::string json_str(buffer);
 
         return {1, "Updated file tree successfully", json_str};
+    }
+
+    ServerResponse create_dir(std::string name, std::string target_dir) {
+        std::string cmd = "CREATEDIR " + name + " " + target_dir;
+        sendToServer(cmd);
+
+        return receiveStatus();
     }
 };
 

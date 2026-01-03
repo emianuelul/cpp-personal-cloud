@@ -54,7 +54,9 @@ void refresh_explorer(slint::ComponentHandle<MainWindow> ui_handle, std::shared_
         auto files_model = std::make_shared<slint::VectorModel<File> >();
         for (const auto &f: files) {
             std::string formatted = format_bits(f.size);
-            std::string path = manager->get_curr_path() + "/" + f.name;
+            std::string path = manager->get_curr_path() == "/"
+                                   ? manager->get_curr_path() + f.name
+                                   : manager->get_curr_path() + "/" + f.name;
 
             files_model->push_back(File{
                 slint::SharedString(f.name),
@@ -139,10 +141,12 @@ int main(int argc, char *argv[]) {
             return;
 
         std::filesystem::path path = selection[0];
+        std::string curr_dir = manager->get_curr_path();
 
-        std::thread network_thread([path, ui_handle, manager]() {
+
+        std::thread network_thread([path, curr_dir, ui_handle, manager]() {
             ServerResponse response =
-                    ServerConnection::getInstance().post(path.string());
+                    ServerConnection::getInstance().post(path.string(), curr_dir);
 
             slint::invoke_from_event_loop([ui_handle, response, manager]() {
                 if (response.status_code == 1) {
@@ -220,15 +224,26 @@ int main(int argc, char *argv[]) {
 
             slint::invoke_from_event_loop([ui_handle, response, manager]() {
                 if (response.status_code == 1) {
-                    std::cout << "Fisier sters cu succes!\n";
+                    std::cout << "Susscessfully deleted file!\n";
                     refresh_file_list(ui_handle, manager);
                 } else {
-                    std::cout << "DELETE esuat de la server.\n";
+                    std::cerr << "DELETE failed.\n";
                 }
             });
         });
 
         network_thread.detach();
+    });
+
+    ui->on_create_dir([ui_handle, manager](slint::SharedString name) {
+        auto resp = ServerConnection::getInstance().create_dir(name.data(), manager->get_curr_path());
+
+        if (resp.status_code == 1) {
+            std::cout << "Successfully created directory\n";
+            refresh_file_list(ui_handle, manager);
+        } else {
+            std::cerr << "Failed To Create Directory\n";
+        }
     });
 
     ui->run();

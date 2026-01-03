@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <fstream>
+#include <utility>
 
 #include "picosha2.h"
 #include "cloud_dir.h"
@@ -78,7 +79,7 @@ public:
 
         std::filesystem::path primary_path = session.getUserDirectory() / "primary" / file_path;
         std::string db_hash = RedundancyManager::getStoredHash(session.getUsername(),
-                                                               primary_path.filename().string());
+                                                               primary_path.string());
 
         std::cout << "Looking for hash of: " << primary_path.filename() << "\n";
         std::cout << "Found hash: " << db_hash << "\n";
@@ -169,10 +170,11 @@ private:
     std::string ObjJson;
     int client_sock;
     UserSession &session;
+    std::string target_dir;
 
 public:
-    PostCommand(std::string ObjJson, int client_sock, UserSession &session)
-        : ObjJson(ObjJson), client_sock(client_sock), session(session) {
+    PostCommand(std::string ObjJson, std::string target_dir, int client_sock, UserSession &session)
+        : ObjJson(std::move(ObjJson)), target_dir(std::move(target_dir)), client_sock(client_sock), session(session) {
     }
 
     ServerResponse execute() override {
@@ -191,8 +193,11 @@ public:
             std::filesystem::path primary_dir = session.getUserDirectory() / "primary";
             std::filesystem::path backup_dir = session.getUserDirectory() / "backup";
 
-            std::filesystem::path primary_file = primary_dir / clean_name;
-            std::filesystem::path backup_file = backup_dir / clean_name;
+            std::string primary_file_str = primary_dir.string() + this->target_dir + "/" + clean_name;
+            std::string backup_file_str = backup_dir.string() + this->target_dir + "/" + clean_name;
+
+            std::filesystem::path primary_file = primary_file_str;
+            std::filesystem::path backup_file = backup_file_str;
 
             if (std::filesystem::exists(primary_file)) {
                 return ServerResponse{0, "File already exists", ""};
@@ -239,8 +244,8 @@ public:
             backup_stream.close();
 
             std::string hash = RedundancyManager::calculateHash(primary_file.string());
-            RedundancyManager::saveFileHash(session.getUsername(), primary_file.filename().string(), hash);
-            std::cout << "Saving hash for: " << primary_file.filename() << "\n";
+            RedundancyManager::saveFileHash(session.getUsername(), primary_file.string(), hash);
+            std::cout << "Saving hash for: " << primary_file << "\n";
             std::cout << "Hash: " << hash << "\n";
 
             std::cout << "File saved with redundancy: " << received_file.name
@@ -333,7 +338,7 @@ private:
     UserSession &session;
 
 public:
-    DeleteCommand(std::string path, UserSession &session) : path(path), session(session) {
+    DeleteCommand(const std::string &path, UserSession &session) : path(path), session(session) {
     }
 
     ServerResponse execute() override {
@@ -356,6 +361,33 @@ public:
     }
 };
 
+class CreateDirCommand : public Command {
+private:
+    std::string name;
+    std::string target_dir;
+    UserSession &session;
+
+public:
+    CreateDirCommand(const std::string &name, const std::string &target_dir, UserSession &session) : name(name),
+        target_dir(target_dir), session(session) {
+    }
+
+    ServerResponse execute() override {
+        std::filesystem::path primary_path_str =
+                session.getUserDirectory().string() + "/" + "primary" + "/" + target_dir + "/" + name;
+        std::filesystem::path backup_path_str = session.getUserDirectory().string() + "/" + "backup" + "/" + target_dir
+                                                + "/" + name;
+
+        try {
+            std::filesystem::create_directory(primary_path_str);
+            std::filesystem::create_directory(backup_path_str);
+            return {1, "Successfully Created Directory", ""};
+        } catch (std::exception e) {
+            return {0, e.what(), ""};
+        }
+    }
+};
+
 class CommandFactory {
 public:
     static std::unique_ptr<Command> createCommand(
@@ -370,11 +402,13 @@ public:
         } else if (command.find("GET") == 0) {
             return std::make_unique<GetCommand>(arguments[0], session, client_sock);
         } else if (command.find("POST") == 0) {
-            return std::make_unique<PostCommand>(arguments[0], client_sock, session);
+            return std::make_unique<PostCommand>(arguments[0], arguments[1], client_sock, session);
         } else if (command.find("LIST") == 0) {
             return std::make_unique<ListCommand>(session);
         } else if (command.find("DELETE") == 0) {
             return std::make_unique<DeleteCommand>(arguments[0], session);
+        } else if (command.find("CREATEDIR") == 0) {
+            return std::make_unique<CreateDirCommand>(arguments[0], arguments[1], session);
         } else {
             throw std::runtime_error("Comanda Invalida");
         }
