@@ -7,7 +7,7 @@ import {
 import { MyButton } from "my_button.slint";
 import { LoginScreen } from "login_screen.slint";
 import { MainPage } from "main_page.slint";
-import { FileExplorer, File } from "file_explorer.slint";
+import { FileExplorer, File, DirEntry } from "file_explorer.slint";
 
 
 export component MainWindow inherits Window {
@@ -19,8 +19,6 @@ export component MainWindow inherits Window {
     preferred-width: 1400px;
     preferred-height: 800px;
 
-    in property <[File]> files: [];
-
     callback try-login(string, string);
 
     callback get(string);
@@ -28,9 +26,14 @@ export component MainWindow inherits Window {
     callback logout();
     callback delete(string);
 
-    callback update-files();
-
     in-out property <bool> is-logged: false;
+
+    in property <[File]> files: [];
+    in property <[DirEntry]> subdirs: [];
+    in property <string> current-path: "/";
+
+    callback navigate-to-dir(string);
+    callback navigate-back();
 
     background: white;
 
@@ -42,6 +45,17 @@ export component MainWindow inherits Window {
 
     if is-logged: MainPage {
         files: root.files;
+        subdirs: subdirs;
+        current-path: current-path;
+
+        navigate-back => {
+            navigate-back();
+        }
+
+        navigate-to-dir(path) => {
+            navigate-to-dir(path);
+        }
+
         get(file-path) => {
             root.get(file-path);
         }
@@ -50,9 +64,6 @@ export component MainWindow inherits Window {
         }
         logout => {
             root.logout();
-        }
-        update-files => {
-            root.update-files();
         }
         delete(path) => {
             delete(path);

@@ -42,9 +42,10 @@ add_executable(client_exec
         include/server_response.h
         src/srv/sv_headers/redundancy_manager.h
         src/srv/sv_headers/db_manager.h
+        src/cli/cli_headers/file_explorer_manager.h
 )
 
-slint_target_sources(client_exec src/cli/ui/main_window.slint)
+slint_target_sources(client_exec src/cli/ui/slint_files/main_window.slint)
 
 target_include_directories(client_exec PRIVATE
         ${CMAKE_SOURCE_DIR}/include

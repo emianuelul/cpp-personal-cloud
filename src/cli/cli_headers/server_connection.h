@@ -247,6 +247,7 @@ public:
         }
     }
 
+    // might not support folders
     ServerResponse post(std::string file_path) {
         if (sock < 0 || !isConnected) {
             std::string err = "You're not connected...\n";

@@ -76,13 +76,12 @@ public:
             return ServerResponse{0, "Not authenticated", ""};
         }
 
-
         std::filesystem::path primary_path = session.getUserDirectory() / "primary" / file_path;
         std::string db_hash = RedundancyManager::getStoredHash(session.getUsername(),
                                                                primary_path.filename().string());
 
-        std::cout << "Looking for hash of: '" << primary_path.filename() << "'\n";
-        std::cout << "Found hash: '" << db_hash << "'\n";
+        std::cout << "Looking for hash of: " << primary_path.filename() << "\n";
+        std::cout << "Found hash: " << db_hash << "\n";
 
         if (!db_hash.empty()) {
             if (!RedundancyManager::verifyFileIntegrity(primary_path.string(), db_hash)) {
@@ -181,6 +180,7 @@ public:
             return ServerResponse{0, "Not authenticated", ""};
         }
 
+        // might not support folders
         try {
             json j = json::parse(this->ObjJson);
             CloudFile received_file = j.get<CloudFile>();
@@ -264,9 +264,18 @@ private:
         cloud_dir.name = dir_path.filename().string();
 
         std::filesystem::path rel_path = std::filesystem::relative(dir_path, base_path);
-        cloud_dir.path = rel_path.string();
-        if (cloud_dir.path == ".") {
-            cloud_dir.path = "";
+
+        if (rel_path == ".") {
+            cloud_dir.path = "/";
+        } else {
+            std::string path_str = rel_path.string();
+            std::replace(path_str.begin(), path_str.end(), '\\', '/');
+
+            if (path_str[0] != '/') {
+                cloud_dir.path = "/" + path_str;
+            } else {
+                cloud_dir.path = path_str;
+            }
         }
 
         try {

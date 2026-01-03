@@ -1,0 +1,59 @@
+import { HorizontalSpacer } from "spacers.slint";
+export component FolderCard inherits TouchArea {
+    in property <string> name: "name.type";
+    in property <int> file-count: 3;
+    in property <string> path: "";
+
+    property <image> icon: @image-url("../icons/folder-icon.svg");
+
+    callback navigate-to-dir(string);
+
+    mouse-cursor: pointer;
+
+    clicked => {
+        navigate-to-dir(path);
+    }
+
+    Rectangle {
+        background: parent.has-hover ? rgba(225, 235, 242, 1) : rgba(256, 256, 256, 1);
+        border-radius: 12px;
+        animate background {
+            duration: 150ms;
+            easing: ease-out;
+        }
+
+        HorizontalLayout {
+            padding: 12px;
+            spacing: 32px;
+
+            Image {
+                source: icon;
+                height: 48px;
+                max-width: 64px;
+                horizontal-alignment: left;
+                horizontal-stretch: 0;
+            }
+
+            Text {
+                text: name;
+                font-size: 24px;
+                font-weight: 600;
+                horizontal-alignment: left;
+                vertical-alignment: center;
+
+                color: black;
+            }
+
+            HorizontalSpacer { }
+
+            Text {
+                text: file-count + " File(s)";
+                font-size: 24px;
+                horizontal-alignment: left;
+                vertical-alignment: center;
+
+                color: rgba(0,0,0,0.5);
+            }
+        }
+    }
+}

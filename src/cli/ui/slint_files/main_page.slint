@@ -5,7 +5,7 @@ import {
     HorizontalBox,
     VerticalBox,
 } from "std-widgets.slint";
-import { FileExplorer, File } from "file_explorer.slint";
+import { FileExplorer, File, DirEntry } from "file_explorer.slint";
 import { FileMetadataSection } from "file_metadata_section.slint";
 import { MyButton } from "my_button.slint";
 import { ActionPanel } from "action_panel.slint";
@@ -18,11 +18,14 @@ export component MainPage inherits Rectangle {
     callback logout();
     callback create-dir();
 
-    callback update-files();
     callback update-metadata(int);
 
     in property <[File]> files: [];
-    in property <int> file_index: 0;
+    in property <[DirEntry]> subdirs: [];
+    in property <string> current-path: "/";
+
+    callback navigate-to-dir(string);
+    callback navigate-back();
 
     background: rgba(195, 213, 235, 1);
 
@@ -41,6 +44,16 @@ export component MainPage inherits Rectangle {
                 drop-shadow-color: rgba(0, 0, 0, 0.35);
 
                 files: files;
+                subdirs: subdirs;
+                current-path: current-path;
+
+                navigate-to-dir(path) => {
+                    navigate-to-dir(path);
+                }
+
+                navigate-back => {
+                    navigate-back();
+                }
 
                 update-metadata(name, path, size) => {
                     metadata-section.file-name = name;
