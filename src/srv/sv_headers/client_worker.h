@@ -17,6 +17,8 @@ private:
     UserSession session;
 
     void processClientCommands() {
+        ServerResponse response;
+
         while (true) {
             char buffer[BUFFER_SIZE] = {0};
             int size;
@@ -39,20 +41,14 @@ private:
                         cmd = trimString(cmd);
                         std::cout << "Received command: " << cmd << "\n";
 
-                        bool succ = false;
-                        std::string response_json = "";
-
                         try {
                             std::unique_ptr<Command> command = CommandFactory::createCommand(cmd, this->fd, session);
-                            ServerResponse resp = command->execute();
+                            response = command->execute();
 
-                            if (resp.status_code) {
-                                std::cout << "SUCCESS: " << resp.status_message << '\n';
-                                succ = true;
-                                response_json = resp.response_data_json;
+                            if (response.status_code) {
+                                std::cout << "SUCCESS: " << response.status_message << '\n';
                             } else {
-                                succ = false;
-                                std::cout << "FAILED: " << resp.status_message << '\n';
+                                std::cout << "FAILED: " << response.status_message << '\n';
                             }
                         } catch (const char *err) {
                             std::cerr << "COMANDA EROARE: " << err << "\n";
@@ -62,17 +58,14 @@ private:
                             std::cerr << "EROARE NECUNOSCUTĂ! Curatare si Oprire.\n";
                         }
 
-                        std::string msgBack = succ ? "SUCC" : "FAIL";
-                        int msgSize = msgBack.length();
-                        send(fd, &msgSize, sizeof(int), 0);
-                        send(fd, msgBack.c_str(), msgBack.length(), 0);
+                        nlohmann::json response_j = response;
+                        std::string response_str = response_j.dump();
 
-                        if (succ && !response_json.empty()) {
-                            int jsonSize = response_json.length();
-                            send(fd, &jsonSize, sizeof(int), 0);
-                            send(fd, response_json.c_str(), response_json.length(), 0);
-                            std::cout << "Sent JSON response: " << jsonSize << " bytes\n";
-                        }
+                        int msgSize = response_str.length();
+                        send(fd, &msgSize, sizeof(int), 0);
+                        send(fd, response_str.c_str(), msgSize, 0);
+
+                        std::cout << "Sent " << response_str << "\n";
                     } else {
                         std::cerr << "Eroare la primire mesaj: asteptat " << size << ", primit " << received << "\n";
                     }

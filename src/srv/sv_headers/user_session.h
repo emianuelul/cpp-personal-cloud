@@ -30,20 +30,24 @@ public:
 
     bool login(const std::string &user, const std::string &password) {
         username = user;
-        authenticated = true;
+        if (DBManager::try_login(username, password)) {
+            authenticated = true;
 
-        user_directory = std::filesystem::path("./storage") / username;
-        std::filesystem::path primary = user_directory / "primary";
-        std::filesystem::path backup = user_directory / "backup";
+            user_directory = std::filesystem::path("./storage") / username;
+            std::filesystem::path primary = user_directory / "primary";
+            std::filesystem::path backup = user_directory / "backup";
 
-        try {
-            std::filesystem::create_directories(primary);
-            std::filesystem::create_directories(backup);
-            std::cout << "Created directories for user: " << username << '\n';
-            return true;
-        } catch (const std::exception &e) {
-            std::cerr << "Failed to create user directories: " << e.what() << '\n';
-            authenticated = false;
+            try {
+                std::filesystem::create_directories(primary);
+                std::filesystem::create_directories(backup);
+                std::cout << "Created directories for user: " << username << '\n';
+                return true;
+            } catch (const std::exception &e) {
+                std::cerr << "Failed to create user directories: " << e.what() << '\n';
+                authenticated = false;
+                return false;
+            }
+        } else {
             return false;
         }
     }

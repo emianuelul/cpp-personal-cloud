@@ -41,7 +41,7 @@ public:
 
     ServerResponse execute() override {
         if (session.login(username, passwd)) {
-            return ServerResponse{1, "Login Successful for " + username, ""};
+            return ServerResponse{1, "Login Successful", ""};
         }
         return ServerResponse{0, "Login Failed", ""};
     }
@@ -78,7 +78,8 @@ public:
         }
 
         std::filesystem::path primary_path = session.getUserDirectory() / "primary" / file_path;
-        std::string db_hash = RedundancyManager::getStoredHash(session.getUsername(),
+        int user_id = DBManager::get_user_id(session.getUsername());
+        std::string db_hash = RedundancyManager::getStoredHash(user_id,
                                                                primary_path.string());
 
         std::cout << "Looking for hash of: " << primary_path.filename() << "\n";
@@ -155,7 +156,9 @@ public:
             }
 
             file.close();
-            return ServerResponse{1, "Get Successful", ""};
+            return ServerResponse{
+                1, "Successfully downloaded " + std::filesystem::path(file_path).filename().string(), ""
+            };
         } catch (const std::exception &e) {
             std::string err = "Error: ";
             err += e.what();
@@ -182,22 +185,24 @@ public:
             return ServerResponse{0, "Not authenticated", ""};
         }
 
-        // might not support folders
+        // IMPLEMENT ENCRYPTING AFTER DOWNLOADING FROM CLIENT
         try {
             json j = json::parse(this->ObjJson);
             CloudFile received_file = j.get<CloudFile>();
 
             std::string clean_name = received_file.name;
-            clean_name.erase(std::remove(clean_name.begin(), clean_name.end(), '"'), clean_name.end());
+            clean_name.erase(std::remove(clean_name.begin(), clean_name.end(), '/'), clean_name.end());
 
             std::filesystem::path primary_dir = session.getUserDirectory() / "primary";
             std::filesystem::path backup_dir = session.getUserDirectory() / "backup";
 
-            std::string primary_file_str = primary_dir.string() + this->target_dir + "/" + clean_name;
-            std::string backup_file_str = backup_dir.string() + this->target_dir + "/" + clean_name;
+            std::string relative_target = this->target_dir;
+            if (!relative_target.empty() && relative_target[0] == '/') {
+                relative_target.erase(0, 1);
+            }
 
-            std::filesystem::path primary_file = primary_file_str;
-            std::filesystem::path backup_file = backup_file_str;
+            std::filesystem::path primary_file = primary_dir / relative_target / clean_name;
+            std::filesystem::path backup_file = backup_dir / relative_target / clean_name;
 
             if (std::filesystem::exists(primary_file)) {
                 return ServerResponse{0, "File already exists", ""};
@@ -207,15 +212,13 @@ public:
             std::ofstream backup_stream(backup_file, std::ios::binary);
 
             if (!primary_stream.is_open() || !backup_stream.is_open()) {
-                return ServerResponse{0, "Failed to create files", ""};
+                return ServerResponse{0, "Failed to create file", ""};
             }
 
             std::string ack = "READY";
             size_t ack_size = ack.length();
             send(client_sock, &ack_size, sizeof(int), 0);
             send(client_sock, ack.c_str(), ack_size, 0);
-
-            std::cout << "Uploading file for user: " << session.getUsername() << '\n';
 
             char buffer[8192];
             size_t total_received = 0;
@@ -244,18 +247,14 @@ public:
             backup_stream.close();
 
             std::string hash = RedundancyManager::calculateHash(primary_file.string());
-            RedundancyManager::saveFileHash(session.getUsername(), primary_file.string(), hash);
-            std::cout << "Saving hash for: " << primary_file << "\n";
-            std::cout << "Hash: " << hash << "\n";
+            int user_id = DBManager::get_user_id(session.getUsername());
+            RedundancyManager::saveFileHash(user_id, primary_file.string(), hash);
 
-            std::cout << "File saved with redundancy: " << received_file.name
-                    << " (" << total_received << " bytes)\n";
-
-            return ServerResponse{1, "Post Successful", ""};
+            return ServerResponse{1, "Successfully uploaded file " + received_file.name, ""};
         } catch (const json::parse_error &e) {
             return ServerResponse{0, "JSON parse error", e.what()};
         } catch (const std::exception &e) {
-            return ServerResponse{0, "Error", e.what()};
+            return ServerResponse{0, "Error uploading file", e.what()};
         }
     }
 };
@@ -373,17 +372,39 @@ public:
     }
 
     ServerResponse execute() override {
-        std::filesystem::path primary_path_str =
+        std::filesystem::path primary_path =
                 session.getUserDirectory().string() + "/" + "primary" + "/" + target_dir + "/" + name;
-        std::filesystem::path backup_path_str = session.getUserDirectory().string() + "/" + "backup" + "/" + target_dir
-                                                + "/" + name;
+        std::filesystem::path backup_path = session.getUserDirectory().string() + "/" + "backup" + "/" + target_dir
+                                            + "/" + name;
 
         try {
-            std::filesystem::create_directory(primary_path_str);
-            std::filesystem::create_directory(backup_path_str);
+            if (std::filesystem::exists(primary_path)) {
+                return {0, "Directory already exists", ""};
+            }
+            std::filesystem::create_directory(primary_path);
+            std::filesystem::create_directory(backup_path);
             return {1, "Successfully Created Directory", ""};
         } catch (std::exception e) {
             return {0, e.what(), ""};
+        }
+    }
+};
+
+class RegisterCommand : public Command {
+private:
+    std::string user;
+    std::string pass;
+
+public:
+    RegisterCommand(const std::string &name, const std::string &pass)
+        : user(name), pass(pass) {
+    }
+
+    ServerResponse execute() override {
+        if (DBManager::try_register(user, pass)) {
+            return {1, "Registered Successfully", ""};
+        } else {
+            return {0, "Username Taken", ""};
         }
     }
 };
@@ -409,6 +430,8 @@ public:
             return std::make_unique<DeleteCommand>(arguments[0], session);
         } else if (command.find("CREATEDIR") == 0) {
             return std::make_unique<CreateDirCommand>(arguments[0], arguments[1], session);
+        } else if (command.find("REGISTER") == 0) {
+            return std::make_unique<RegisterCommand>(arguments[0], arguments[1]);
         } else {
             throw std::runtime_error("Comanda Invalida");
         }

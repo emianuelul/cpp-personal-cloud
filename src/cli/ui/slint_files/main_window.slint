@@ -8,6 +8,7 @@ import { MyButton } from "my_button.slint";
 import { LoginScreen } from "login_screen.slint";
 import { MainPage } from "main_page.slint";
 import { FileExplorer, File, DirEntry } from "file_explorer.slint";
+import { Toast } from "toast.slint";
 
 
 export component MainWindow inherits Window {
@@ -19,6 +20,7 @@ export component MainWindow inherits Window {
     preferred-width: 1400px;
     preferred-height: 800px;
 
+    callback register(string, string);
     callback try-login(string, string);
 
     callback get(string);
@@ -41,6 +43,10 @@ export component MainWindow inherits Window {
     if !is-logged: LoginScreen {
         try-login(name, passwd) => {
             root.try-login(name, passwd);
+        }
+
+        register(name, passwd) => {
+            root.register(name, passwd);
         }
     }
 
@@ -73,5 +79,16 @@ export component MainWindow inherits Window {
         create-dir(name) => {
             create-dir(name);
         }
+    }
+
+    in property <bool> showing-toast: false;
+    in property <string> toast-msg: "PLACEHOLDER";
+    in property <string> toast-type: "SUCC";
+    if(showing-toast): Toast {
+        message: toast-msg;
+        type: toast-type;
+
+        x: parent.width - self.width - 20px;
+        y: 20px;
     }
 }

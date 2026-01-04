@@ -62,7 +62,7 @@ export component FileExplorer inherits Rectangle {
                         }
                     }
 
-                    mouse-cursor: pointer;
+                    mouse-cursor: current-path == "/" ? default : pointer;
                 }
 
                 Text {
@@ -125,7 +125,6 @@ export component FileExplorer inherits Rectangle {
                         name: file.name;
                         path: file.path;
                         size: file.size;
-                        date: "dd/mm/yyyy";
 
                         clicked => {
                             update-metadata(self.name, self.path, self.size);

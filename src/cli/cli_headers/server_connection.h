@@ -8,6 +8,7 @@
 
 #include "cloud_file.h"
 #include "server_response.h"
+#include "utility_functions.h"
 
 #define BUFFER_SIZE 8192
 #define PORT 8005
@@ -33,38 +34,48 @@ private:
         int len = msg.length();
         ssize_t sent = send(sock, &len, sizeof(int), 0);
         if (sent < 0) {
-            std::cout << "Eroare la send\n";
+            std::cout << "Error sending\n";
         }
         sent = send(sock, msg.c_str(), msg.length(), 0);
-        std::cout << "Trimis la server: " << msg << '\n';
+        std::cout << "Sent to server: " << msg << '\n';
 
         return {sent == msg.length() ? 1 : 0, sent == msg.length() ? "Sent successfully\n" : "Failed to send\n", ""};
     }
 
     ServerResponse receiveStatus() {
-        int size;
-        if (recv(sock, &size, sizeof(int), 0) != sizeof(int)) {
-            return {0, "Eroare la primirea dimensiunii status\n", ""};
+        try {
+            int size;
+            if (recv(sock, &size, sizeof(int), 0) != sizeof(int)) {
+                return {0, "Error getting status size\n", ""};
+            }
+
+            if (size <= 0) {
+                return {0, "Invalid status size (<=0)\n", ""};
+            }
+
+            std::vector<char> buffer(size + 1);
+
+            int total_received = 0;
+            while (total_received < size) {
+                int bytes_to_read = size - total_received;
+                int received = recv(sock, buffer.data() + total_received, bytes_to_read, 0);
+                if (received <= 0) {
+                    return {0, "Connection lost while receiving status\n", ""};
+                }
+
+                total_received += received;
+            }
+
+            buffer[size] = '\0';
+            std::string status(buffer.data());
+
+            json j = json::parse(status);
+            ServerResponse response = j.get<ServerResponse>();
+
+            return response;
+        } catch (const std::exception &e) {
+            return {0, e.what(), ""};
         }
-
-        if (size <= 0 || size >= BUFFER_SIZE) {
-            std::stringstream s;
-            s << "Invalid Status Size: " << size << "\n";
-            std::string err = s.str();
-
-            return {0, err, ""};
-        }
-
-        char buffer[BUFFER_SIZE];
-        int received = recv(sock, buffer, size, 0);
-        if (received != size) {
-            return {0, "Eroare la primirea status-ului\n", ""};
-        }
-
-        buffer[size] = '\0';
-        std::string status(buffer);
-
-        return {(status == "SUCC" ? 1 : 0), status, ""};
     }
 
 public:
@@ -83,13 +94,13 @@ public:
 
     ServerResponse connect() {
         if (isConnected) {
-            std::string err = "Deja conectat\n";
+            std::string err = "Already connected\n";
             return {0, err, ""};
         }
 
         sock = socket(AF_INET, SOCK_STREAM, 0);
         if (sock < 0) {
-            std::string err = "Eroare la crearea socket-ului\n";
+            std::string err = "Error creating socket\n";
             return {0, err, ""};
         }
 
@@ -99,11 +110,11 @@ public:
         serverAddr.sin_addr.s_addr = inet_addr(IP);
 
         if (::connect(sock, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr)) < 0) {
-            std::string err = "Eroare la connect\n";
+            std::string err = "Error connecting\n";
             close(sock);
             return {0, err, ""};
         }
-        std::string status = "Client-ul s-a conectat!\n";
+        std::string status = "Client connected!\n";
         isConnected = true;
 
         return {1, status, ""};
@@ -114,12 +125,19 @@ public:
             close(sock);
             sock = -1;
             isConnected = false;
-            std::cout << "Deconectat de la server\n";
+            std::cout << "Disconnected from server\n";
         }
     }
 
     bool connected() const {
         return isConnected;
+    }
+
+    ServerResponse register_cmd(std::string user, std::string passwd) {
+        std::string cmd = "REGISTER " + user + " " + passwd;
+        sendToServer(cmd);
+
+        return receiveStatus();
     }
 
     ServerResponse login(std::string user, std::string passwd) {
@@ -131,28 +149,40 @@ public:
         this->user = user;
         this->pass = passwd;
 
+        if (trimString(user).empty() || trimString(passwd).empty()) {
+            std::string err = "Invalid Name / Password\n";
+            return {0, err, ""};
+        }
+
+        if (user.length() > 24 || passwd.length() > 24) {
+            std::string err = "Name / Password is too long\n";
+            return {0, err, ""};
+        }
+
         std::string cmd = "LOGIN " + user + " " + passwd;
         sendToServer(cmd);
 
+        auto response = receiveStatus();
+        if (response.status_code) {
+            if (!std::filesystem::exists("./cloud_downloads")) {
+                if (std::filesystem::create_directory("./cloud_downloads")) {
+                    std::cout << "Created Cloud Downloads Directory\n";
+                } else {
+                    std::cout << "Failed to create Cloud Downloads Directory\n";
+                }
+            }
+            this->user_dir = std::filesystem::path("./cloud_downloads") / this->user;
 
-        if (!std::filesystem::exists("./cloud_downloads")) {
-            if (std::filesystem::create_directory("./cloud_downloads")) {
-                std::cout << "Created Cloud Downloads Directory\n";
-            } else {
-                std::cout << "Failed to create Cloud Downloads Directory\n";
+            if (!std::filesystem::exists(this->user_dir)) {
+                if (std::filesystem::create_directory(this->user_dir)) {
+                    std::cout << "Created User Cloud Downloads Dir\n";
+                } else {
+                    std::cout << "Failed to create User Cloud Downloads Dir\n";
+                }
             }
         }
-        this->user_dir = std::filesystem::path("./cloud_downloads") / this->user;
 
-        if (!std::filesystem::exists(this->user_dir)) {
-            if (std::filesystem::create_directory(this->user_dir)) {
-                std::cout << "Created User Cloud Downloads Dir\n";
-            } else {
-                std::cout << "Failed to create User Cloud Downloads Dir\n";
-            }
-        }
-
-        return receiveStatus();
+        return response;
     }
 
     ServerResponse logout() {
@@ -189,14 +219,16 @@ public:
             std::filesystem::path file_path = this->user_dir / received_file.name;
 
             if (std::filesystem::exists(file_path)) {
-                std::string ack = "ABORT";
-                size_t ack_size = ack.length();
-                send(sock, &ack_size, sizeof(int), 0);
-                send(sock, ack.c_str(), ack_size, 0);
+                std::string base_name = file_path.stem().string();
+                std::string extension = file_path.extension().string();
+                int counter = 1;
 
-                auto _ = receiveStatus();
-
-                return ServerResponse{0, "File already exists", ""};
+                while (std::filesystem::exists(file_path)) {
+                    counter++;
+                    std::string new_name = base_name + "(" + std::to_string(counter) + ")";
+                    new_name += extension;
+                    file_path = this->user_dir / new_name;
+                }
             }
 
             std::ofstream primary_stream(file_path, std::ios::binary);
@@ -353,46 +385,23 @@ public:
             return {0, err, ""};
         }
 
-        int json_size;
-        if (recv(sock, &json_size, sizeof(int), 0) != sizeof(int)) {
-            std::string err = "Error JSON doesn't match received size\n";
-            return {0, err, ""};
-        }
-
-        if (json_size <= 0 || json_size >= BUFFER_SIZE) {
-            std::stringstream s;
-            s << "Invalid JSON size: " << json_size << "\n";
-            std::string err = s.str();
-
-            return {0, err, ""};
-        }
-
-        std::cout << "Primesc JSON de " << json_size << " bytes\n";
-
-        char buffer[BUFFER_SIZE];
-        memset(buffer, 0, BUFFER_SIZE);
-
-        int total_received = 0;
-        while (total_received < json_size) {
-            int bytes_to_read = json_size - total_received;
-            if (bytes_to_read > BUFFER_SIZE - total_received - 1) {
-                bytes_to_read = BUFFER_SIZE - total_received - 1;
-            }
-            int received = recv(sock, buffer + total_received, bytes_to_read, 0);
-            if (received <= 0) {
-                std::string err = "Error getting JSON\n";
-                return {0, err, ""};
-            }
-            total_received += received;
-        }
-
-        buffer[total_received] = '\0';
-        std::string json_str(buffer);
+        int json_size = status.response_data_json.length();
+        std::string json_str = status.response_data_json;
 
         return {1, "Updated file tree successfully", json_str};
     }
 
     ServerResponse create_dir(std::string name, std::string target_dir) {
+        if (trimString(name).empty()) {
+            std::string err = "Invalid name\n";
+            return {0, err, ""};
+        }
+
+        if (name.length() > 24) {
+            std::string err = "Name is too long\n";
+            return {0, err, ""};
+        }
+
         std::string cmd = "CREATEDIR " + name + " " + target_dir;
         sendToServer(cmd);
 

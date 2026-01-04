@@ -52,6 +52,9 @@ export component MainPage inherits Rectangle {
                 current-path: current-path;
 
                 navigate-to-dir(path) => {
+                    metadata-section.file-name = "-";
+                    metadata-section.path = "-";
+                    metadata-section.size = "-";
                     navigate-to-dir(path);
                 }
 

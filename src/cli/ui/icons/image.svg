@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_2" x="0px" y="0px" enable-background="new 0 0 512 512" xml:space="preserve" viewBox="10 10 492 492">
+<g>
+	<g>
+		<rect x="10" y="10" fill="#EDEFF1" width="492" height="492"/>
+	</g>
+	<g>
+		<rect x="236" y="236" transform="matrix(-1.836970e-16 1 -1 -1.836970e-16 706 194)" fill="#D3D3D3" width="40" height="428"/>
+	</g>
+	<g>
+		<rect x="86" y="-2" transform="matrix(-1.836970e-16 1 -1 -1.836970e-16 468 -44)" fill="#80D6FB" width="340" height="428"/>
+	</g>
+	<g>
+		<polygon fill="#75AA40" points="318,382 155,220 42,334 42,382   "/>
+	</g>
+	<g>
+		<polygon fill="#98CA69" points="90,382 314,159 470,316 470,382   "/>
+	</g>
+	<g>
+		<circle fill="#FFE352" cx="213" cy="116" r="43"/>
+	</g>
+</g>
+</svg>

@@ -2,7 +2,6 @@ import { HorizontalSpacer } from "spacers.slint";
 export component FileCard inherits TouchArea {
     in property <string> name: "name.type";
     in property <string> size: "6.5MB";
-    in property <string> date: "dd/mm/yyyy";
     in property <string> path: "";
 
     mouse-cursor: pointer;
@@ -46,15 +45,6 @@ export component FileCard inherits TouchArea {
 
             Text {
                 text: size;
-                font-size: 24px;
-                horizontal-alignment: left;
-                vertical-alignment: center;
-
-                color: rgba(0,0,0,0.5);
-            }
-
-            Text {
-                text: date;
                 font-size: 24px;
                 horizontal-alignment: left;
                 vertical-alignment: center;

@@ -22,12 +22,12 @@ public:
         std::string sql =
                 "CREATE TABLE IF NOT EXISTS file_hashes ("
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                "username TEXT NOT NULL, "
+                "user_id INTEGER NOT NULL, "
                 "filename TEXT NOT NULL, "
                 "filepath TEXT NOT NULL, "
                 "hash TEXT NOT NULL, "
                 "timestamp TEXT DEFAULT (strftime('%d/%m/%Y', 'now')), "
-                "UNIQUE(username, filename)"
+                "UNIQUE (user_id, filename)"
                 ");";
 
         char *err_msg = nullptr;
@@ -44,7 +44,7 @@ public:
         return true;
     }
 
-    static std::string calculateHash(std::string file_path) {
+    static std::string calculateHash(const std::string &file_path) {
         std::ifstream file(file_path, std::ios::binary);
 
         if (!file.is_open()) {
@@ -59,29 +59,28 @@ public:
         return picosha2::bytes_to_hex_string(hash.begin(), hash.end());
     }
 
-    static bool saveFileHash(std::string user, std::string file_name, std::string hash) {
+    static bool saveFileHash(int user_id, const std::string &full_path, const std::string &hash) {
         sqlite3 *db;
         sqlite3_open("./storage/cloud.db", &db);
 
-        std::string sql = "INSERT OR REPLACE INTO file_hashes (username, filename, hash) VALUES (?,?,?);";
+        std::string filename = std::filesystem::path(full_path).filename().string();
+        std::string sql = "INSERT OR REPLACE INTO file_hashes (user_id, filename, filepath, hash) VALUES (?,?,?,?);";
+
         sqlite3_stmt *stmt;
         sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
 
-        sqlite3_bind_text(stmt, 1, user.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 2, file_name.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 3, hash.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 1, user_id);
+        sqlite3_bind_text(stmt, 2, filename.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 3, full_path.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 4, hash.c_str(), -1, SQLITE_TRANSIENT);
 
         int rc = sqlite3_step(stmt);
-
         sqlite3_finalize(stmt);
         sqlite3_close(db);
-
-        std::cout << "Saved to db\n";
-
         return rc == SQLITE_DONE;
     }
 
-    static bool verifyFileIntegrity(std::string file_path, std::string db_hash) {
+    static bool verifyFileIntegrity(const std::string &file_path, const std::string &db_hash) {
         if (db_hash.empty()) {
             std::cout << "No hash found in DB for this file... Skipping integrity check\n";
             return true;
@@ -92,7 +91,7 @@ public:
         return current_hash == db_hash;
     }
 
-    static bool repairFromBackup(std::string primary_path, std::string backup_path) {
+    static bool repairFromBackup(const std::string &primary_path, const std::string &backup_path) {
         if (!std::filesystem::exists(backup_path)) {
             std::cerr << "Backup file doesn't exist: " << backup_path << '\n';
             return false;
@@ -110,30 +109,26 @@ public:
         }
     }
 
-    static std::string getStoredHash(std::string user, std::string file_name) {
+    static std::string getStoredHash(int user_id, const std::string &full_path) {
         sqlite3 *db;
         sqlite3_open("./storage/cloud.db", &db);
 
-        std::string sql = "SELECT hash FROM file_hashes WHERE username = ? AND filename = ?;";
+        std::string sql = "SELECT hash FROM file_hashes WHERE user_id = ? AND filepath = ?;";
 
         sqlite3_stmt *stmt;
         sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
 
-        sqlite3_bind_text(stmt, 1, user.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, 2, file_name.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 1, user_id);
+        sqlite3_bind_text(stmt, 2, full_path.c_str(), -1, SQLITE_TRANSIENT);
 
         std::string hash = "";
-
         if (sqlite3_step(stmt) == SQLITE_ROW) {
             const unsigned char *result = sqlite3_column_text(stmt, 0);
-            if (result) {
-                hash = std::string(reinterpret_cast<const char *>(result));
-            }
+            if (result) hash = std::string(reinterpret_cast<const char *>(result));
         }
 
         sqlite3_finalize(stmt);
         sqlite3_close(db);
-
         return hash;
     }
 };

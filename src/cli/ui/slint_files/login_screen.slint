@@ -6,6 +6,7 @@ export component LoginScreen inherits VerticalLayout {
     property <string> username;
     property <string> passwd;
     callback try-login(string, string);
+    callback register(string, string);
 
     HorizontalLayout {
         alignment: center;
@@ -46,11 +47,23 @@ export component LoginScreen inherits VerticalLayout {
                     }
                 }
 
-                MyButton {
-                    text: "Login";
+                HorizontalLayout {
+                    spacing: 8px;
 
-                    clicked => {
-                        try-login(username, passwd);
+                    MyButton {
+                        text: "Register";
+
+                        clicked => {
+                            register(username, passwd);
+                        }
+                    }
+
+                    MyButton {
+                        text: "Login";
+
+                        clicked => {
+                            try-login(username, passwd);
+                        }
                     }
                 }
             }

@@ -9,19 +9,18 @@
 
 #define PORT 8005
 #define BACKLOG 30
-#define BUFFER_SIZE 2048
 
 int main() {
     const int serverFd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (serverFd == 0) {
-        std::cout << "Eroare la crearea socket-ului\n";
+        std::cout << "Error creating socket\n";
         return -1;
     }
 
     int opt = 1;
     if (setsockopt(serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        std::cerr << "EROARE la setsockopt\n";
+        std::cerr << "Error on setsockopt\n";
     }
 
     sockaddr_in serverAddr{};
@@ -32,35 +31,36 @@ int main() {
     socklen_t serverLen = sizeof(serverAddr);
 
     if (bind(serverFd, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr))) {
-        std::cout << "Eroare la bind\n";
+        std::cerr << "Error binding\n";
 
         close(serverFd);
         return -1;
     }
 
     if (listen(serverFd, BACKLOG)) {
-        std::cout << "Eroare la listen\n";
+        std::cerr << "Error listening\n";
 
         close(serverFd);
         return -1;
     }
 
 
-    std::cout << "Serverul asculta pe portul: " << PORT << "\n";
+    std::cout << "Server is listening on port: " << PORT << "\n";
 
     std::filesystem::create_directory("./storage");
     RedundancyManager::initDatabase();
+    DBManager::initUsers();
 
     while (true) {
         int new_sock = accept(serverFd, reinterpret_cast<sockaddr *>(&serverAddr), &serverLen);
         if (new_sock < 0) {
-            std::cout << "Eroare la connect\n";
+            std::cout << "Error connecting\n";
 
             close(serverFd);
             return -1;
         }
 
-        std::cout << "Un client s-a conectat\n";
+        std::cout << "Client connected\n";
 
         ClientWorker worker(new_sock);
 

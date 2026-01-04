@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <chrono>
 
 #include "cloud_dir.h"
 #include "main_window.h"
@@ -90,25 +91,34 @@ void refresh_file_list(slint::ComponentHandle<MainWindow> ui_handle, std::shared
     network_thread.detach();
 }
 
-void show_status(ServerResponse resp) {
-    std::cout << "\n===== COMMAND STATUS =====\n";
-    std::cout << "Code: " << resp.status_code << '\n';
-    std::cout << "Msg: " << resp.status_message << '\n';
-    std::cout << "Received JSON: " << resp.response_data_json << "\n\n";
+void show_toast(bool succ, const std::string &msg, slint::ComponentHandle<MainWindow> ui_handle) {
+    if (succ) {
+        ui_handle->set_toast_msg(slint::SharedString(msg));
+        ui_handle->set_toast_type(slint::SharedString("SUCC"));
+        ui_handle->set_showing_toast(true);
+    } else {
+        ui_handle->set_toast_msg(slint::SharedString(msg));
+        ui_handle->set_toast_type(slint::SharedString("FAIL"));
+        ui_handle->set_showing_toast(true);
+    }
+
+    slint::Timer::single_shot(std::chrono::seconds(2), [ui_handle] {
+        ui_handle->set_showing_toast(false);
+    });
 }
 
 int main(int argc, char *argv[]) {
     auto &server = ServerConnection::getInstance();
 
     if (server.connect().status_code == 0) {
-        std::cerr << "Eroare la conectarea la server!\n";
+        std::cerr << "Error connecting to server\n";
         return 1;
     }
 
     auto ui = MainWindow::create();
     slint::ComponentHandle<MainWindow> ui_handle(ui);
 
-    auto manager = std::make_shared<FileExplorerManager>(
+    auto explorer_manager = std::make_shared<FileExplorerManager>(
         CloudDir{"root", "/", {}, {}}
     );
 
@@ -120,13 +130,11 @@ int main(int argc, char *argv[]) {
             ServerResponse response =
                     ServerConnection::getInstance().get(process_path);
 
-            show_status(response);
-
-            slint::invoke_from_event_loop([ui_handle, response]() {
+            slint::invoke_from_event_loop([ui_handle, response] {
                 if (response.status_code == 1) {
-                    std::cout << "Successfully downloaded file!\n";
+                    show_toast(true, response.status_message, ui_handle);
                 } else {
-                    std::cout << "Failed to get file from server\n";
+                    show_toast(false, response.status_message, ui_handle);
                 }
             });
         });
@@ -134,26 +142,27 @@ int main(int argc, char *argv[]) {
         network_thread.detach();
     });
 
-    ui->on_post([ui_handle, manager]() {
+    ui->on_post([ui_handle, explorer_manager]() {
         auto selection = pfd::open_file("Select file to upload").result();
 
         if (selection.empty())
             return;
 
         std::filesystem::path path = selection[0];
-        std::string curr_dir = manager->get_curr_path();
+        std::string curr_dir = explorer_manager->get_curr_path();
 
 
-        std::thread network_thread([path, curr_dir, ui_handle, manager]() {
+        std::thread network_thread([path, curr_dir, ui_handle, explorer_manager]() {
             ServerResponse response =
                     ServerConnection::getInstance().post(path.string(), curr_dir);
 
-            slint::invoke_from_event_loop([ui_handle, response, manager]() {
+
+            slint::invoke_from_event_loop([ui_handle, response, explorer_manager]() {
                 if (response.status_code == 1) {
-                    std::cout << "Fisier incarcat cu succes!\n";
-                    refresh_file_list(ui_handle, manager);
+                    show_toast(true, response.status_message, ui_handle);
+                    refresh_file_list(ui_handle, explorer_manager);
                 } else {
-                    std::cout << "Post esuat de la server.\n";
+                    show_toast(false, response.status_message, ui_handle);
                 }
             });
         });
@@ -161,17 +170,15 @@ int main(int argc, char *argv[]) {
         network_thread.detach();
     });
 
-    ui->on_navigate_back([ui_handle, manager]() {
-        if (manager->navigate_back()) {
-            refresh_explorer(ui_handle, manager);
+    ui->on_navigate_back([ui_handle, explorer_manager]() {
+        if (explorer_manager->navigate_back()) {
+            refresh_explorer(ui_handle, explorer_manager);
         }
     });
 
-    ui->on_navigate_to_dir([ui_handle, manager](slint::SharedString path) {
-        if (manager->navigate_to(path.data())) {
-            refresh_explorer(ui_handle, manager);
-        } else {
-            std::cerr << "Navigation failed for path: " << path.data() << std::endl;
+    ui->on_navigate_to_dir([ui_handle, explorer_manager](slint::SharedString path) {
+        if (explorer_manager->navigate_to(path.data())) {
+            refresh_explorer(ui_handle, explorer_manager);
         }
     });
 
@@ -182,10 +189,6 @@ int main(int argc, char *argv[]) {
             slint::invoke_from_event_loop([ui_handle, response]() {
                 if (auto *ui = ui_handle.operator->()) {
                     ui->set_is_logged(false);
-
-                    if (response.status_code == 0) {
-                        std::cout << "Logout esuat de pe server.\n";
-                    }
                 }
             });
         });
@@ -193,20 +196,21 @@ int main(int argc, char *argv[]) {
         network_thread.detach();
     });
 
-    ui->on_try_login([ui_handle, manager](slint::SharedString name, slint::SharedString passwd) {
-        std::thread network_thread([ui_handle, name, passwd, manager]() {
+    ui->on_try_login([ui_handle, explorer_manager](slint::SharedString name, slint::SharedString passwd) {
+        std::thread network_thread([ui_handle, name, passwd, explorer_manager]() {
             ServerResponse response = ServerConnection::getInstance().login(name.data(), passwd.data());
 
-            slint::invoke_from_event_loop([ui_handle, response, manager]() {
+            slint::invoke_from_event_loop([ui_handle, response, explorer_manager]() {
                 auto *ui = ui_handle.operator->();
                 if (!ui) return;
 
                 if (response.status_code) {
+                    show_toast(true, response.status_message, ui_handle);
                     ui->set_is_logged(true);
-                    refresh_file_list(ui_handle, manager);
+                    refresh_file_list(ui_handle, explorer_manager);
                 } else {
                     ui->set_is_logged(false);
-                    std::cout << "Login esuat pe server.\n";
+                    show_toast(false, response.status_message, ui_handle);
                 }
             });
         });
@@ -214,20 +218,37 @@ int main(int argc, char *argv[]) {
         network_thread.detach();
     });
 
-    ui->on_delete([ui_handle, manager](slint::SharedString path) {
-        std::thread network_thread([path, ui_handle, manager]() {
+    ui->on_register([ui_handle, explorer_manager](slint::SharedString name, slint::SharedString passwd) {
+        std::thread network_thread([ui_handle, name, passwd, explorer_manager]() {
+            ServerResponse response = ServerConnection::getInstance().register_cmd(name.data(), passwd.data());
+
+
+            slint::invoke_from_event_loop([ui_handle, response, explorer_manager]() {
+                auto *ui = ui_handle.operator->();
+                if (!ui) return;
+
+                if (response.status_code == 1) {
+                    show_toast(true, response.status_message, ui_handle);
+                } else {
+                    show_toast(false, response.status_message, ui_handle);
+                }
+            });
+        });
+
+        network_thread.detach();
+    });
+
+    ui->on_delete([ui_handle, explorer_manager](slint::SharedString path) {
+        std::thread network_thread([path, ui_handle, explorer_manager]() {
             std::string process_path = path.data();
             process_path.erase(0, 1);
 
             ServerResponse response =
                     ServerConnection::getInstance().delete_file(process_path);
 
-            slint::invoke_from_event_loop([ui_handle, response, manager]() {
+            slint::invoke_from_event_loop([ui_handle, response, explorer_manager]() {
                 if (response.status_code == 1) {
-                    std::cout << "Susscessfully deleted file!\n";
-                    refresh_file_list(ui_handle, manager);
-                } else {
-                    std::cerr << "DELETE failed.\n";
+                    refresh_file_list(ui_handle, explorer_manager);
                 }
             });
         });
@@ -235,15 +256,17 @@ int main(int argc, char *argv[]) {
         network_thread.detach();
     });
 
-    ui->on_create_dir([ui_handle, manager](slint::SharedString name) {
-        auto resp = ServerConnection::getInstance().create_dir(name.data(), manager->get_curr_path());
+    ui->on_create_dir([ui_handle, explorer_manager](slint::SharedString name) {
+        auto response = ServerConnection::getInstance().create_dir(name.data(), explorer_manager->get_curr_path());
 
-        if (resp.status_code == 1) {
-            std::cout << "Successfully created directory\n";
-            refresh_file_list(ui_handle, manager);
-        } else {
-            std::cerr << "Failed To Create Directory\n";
-        }
+        slint::invoke_from_event_loop([ui_handle, explorer_manager, response] {
+            if (response.status_code == 1) {
+                show_toast(true, response.status_message, ui_handle);
+                refresh_file_list(ui_handle, explorer_manager);
+            } else {
+                show_toast(false, response.status_message, ui_handle);
+            }
+        });
     });
 
     ui->run();
