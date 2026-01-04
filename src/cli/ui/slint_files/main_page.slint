@@ -59,6 +59,9 @@ export component MainPage inherits Rectangle {
                 }
 
                 navigate-back => {
+                    metadata-section.file-name = "-";
+                    metadata-section.path = "-";
+                    metadata-section.size = "-";
                     navigate-back();
                 }
 
