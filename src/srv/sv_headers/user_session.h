@@ -9,6 +9,8 @@
 class UserSession {
 private:
     std::string username;
+    int userid;
+    std::string password_hash;
     bool authenticated;
     std::filesystem::path user_directory;
 
@@ -28,10 +30,21 @@ public:
         return user_directory;
     }
 
+    std::string getPasswordHash() const {
+        return password_hash;
+    }
+
+    int getUserId() const {
+        return userid;
+    }
+
     bool login(const std::string &user, const std::string &password) {
         username = user;
         if (DBManager::try_login(username, password)) {
             authenticated = true;
+
+            userid = DBManager::get_user_id(username);
+            password_hash = DBManager::get_user_hash(userid);
 
             user_directory = std::filesystem::path("./storage") / username;
             std::filesystem::path primary = user_directory / "primary";

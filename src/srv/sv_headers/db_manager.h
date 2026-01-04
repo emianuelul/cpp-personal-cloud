@@ -3,6 +3,7 @@
 #include <random>
 #include <sqlite3.h>
 #include <string>
+#include <picosha2.h>
 
 class DBManager {
 private:
@@ -222,6 +223,55 @@ public:
         sqlite3_close(db);
 
         return id;
+    }
+
+    static std::string get_user_hash(int user_id) {
+        sqlite3 *db;
+
+        int rc = sqlite3_open("./storage/cloud.db", &db);
+        if (rc != SQLITE_OK) {
+            std::cerr << "Can't open database: " << sqlite3_errmsg(db) << '\n';
+            return "";
+        }
+
+        sqlite3_stmt *stmt;
+        std::string sql = "SELECT password_hash FROM users WHERE id = ?;";
+
+        rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+        if (rc != SQLITE_OK) {
+            std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << '\n';
+            sqlite3_close(db);
+            return "";
+        }
+
+        sqlite3_bind_int(stmt, 1, user_id);
+
+        rc = sqlite3_step(stmt);
+
+        if (rc != SQLITE_ROW) {
+            std::cerr << "User not found\n";
+            sqlite3_finalize(stmt);
+            sqlite3_close(db);
+            return "";
+        }
+
+        const char *hash_ch = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
+        std::string hash = hash_ch;
+
+        size_t delimiter_pos = hash.find(':');
+        if (delimiter_pos == std::string::npos) {
+            std::cerr << "Invalid password hash format\n";
+            sqlite3_finalize(stmt);
+            sqlite3_close(db);
+            return "";
+        }
+
+        hash = hash.substr(delimiter_pos + 1);
+
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+
+        return hash;
     }
 };
 

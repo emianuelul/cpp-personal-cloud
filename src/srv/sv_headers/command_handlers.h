@@ -12,6 +12,7 @@
 #include "cloud_dir.h"
 #include "cloud_file.h"
 #include "db_manager.h"
+#include "encryption_manager.h"
 #include "redundancy_manager.h"
 #include "server_response.h"
 #include "user_session.h"
@@ -96,7 +97,6 @@ public:
         }
 
         file_path = primary_path;
-
         try {
             if (!std::filesystem::exists(file_path)) {
                 std::string err = "File doesn't exist " + file_path;
@@ -136,7 +136,7 @@ public:
 
             std::ifstream file(file_path, std::ios::binary);
             if (!file.is_open()) {
-                std::string err = "Can't open file for reading\n";
+                std::string err = "Can't open file for reading";
                 return {0, err, ""};
             }
 
@@ -145,9 +145,13 @@ public:
 
             while (file.read(file_buffer, sizeof(file_buffer)) || file.gcount() > 0) {
                 size_t bytes_to_send = file.gcount();
+
+                std::string hash = session.getPasswordHash();
+                EncryptionManager::decrypt((uint8_t *) file_buffer, bytes_to_send, hash);
+
                 ssize_t sent = send(sock, file_buffer, bytes_to_send, 0);
                 if (sent < 0) {
-                    std::string err = "Error sending file data to client\n";
+                    std::string err = "Error sending file data to client";
                     file.close();
                     return {0, err, ""};
                 }
@@ -185,7 +189,6 @@ public:
             return ServerResponse{0, "Not authenticated", ""};
         }
 
-        // IMPLEMENT ENCRYPTING AFTER DOWNLOADING FROM CLIENT
         try {
             json j = json::parse(this->ObjJson);
             CloudFile received_file = j.get<CloudFile>();
@@ -236,6 +239,9 @@ public:
                     std::filesystem::remove(backup_file);
                     return ServerResponse{0, "Transfer interrupted", ""};
                 }
+
+                std::string hash = session.getPasswordHash();
+                EncryptionManager::encrypt((uint8_t *) buffer, bytes_received, hash);
 
                 primary_stream.write(buffer, bytes_received);
                 backup_stream.write(buffer, bytes_received);
