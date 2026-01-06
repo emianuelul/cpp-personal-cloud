@@ -2,3 +2,4 @@ cmake-build-debug/
 .idea/
 build/
 .qtcreator/
+src/srv/send_to_server.sh

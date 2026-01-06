@@ -1,43 +1,46 @@
 import { HorizontalSpacer } from "spacers.slint";
+
 export component FileCard inherits TouchArea {
     in property <string> name: "name.type";
     in property <string> size: "6.5MB";
-    in property <string> path: "";
+    in property <string> path;
+    in property <string> extension: "";
 
     mouse-cursor: pointer;
+
+    property <image> icon-default: @image-url("../icons/default.svg");
+    property <image> icon-image: @image-url("../icons/image.svg");
+    property <image> icon-md: @image-url("../icons/markdown.svg");
+    property <image> icon-pdf: @image-url("../icons/pdf.svg");
+    property <image> icon-video: @image-url("../icons/video.svg");
+    property <image> icon-zip: @image-url("../icons/zip.svg");
+
+    property <image> icon:
+        extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".webp" || extension == ".gif" || extension == ".svg" || extension == ".ico" ? icon-image : extension == ".md" || extension == ".txt" || extension == ".doc" || extension == ".docx" || extension == ".odt" ? icon-md : extension == ".pdf" ? icon-pdf : extension == ".mp4" || extension == ".mkv" || extension == ".avi" || extension == ".mov" || extension == ".wmv" || extension == ".flv" || extension == ".webm" ? icon-video : extension == ".zip" || extension == ".rar" || extension == ".7z" || extension == ".tar" || extension == ".gz" || extension == ".bz2" ? icon-zip : icon-default;
 
     Rectangle {
         background: parent.has-hover ? rgba(225, 235, 242, 1) : rgba(256, 256, 256, 1);
         border-radius: 12px;
-        animate background {
-            duration: 150ms;
-            easing: ease-out;
-        }
+        animate background { duration: 150ms; }
 
         HorizontalLayout {
             padding: 12px;
             spacing: 32px;
 
-            HorizontalLayout {
-                alignment: start;
-                vertical-stretch: 0;
+            Image {
+                source: icon;
+                height: 64px;
+                width: 48px;
+                image-fit: contain;
+                horizontal-alignment: center;
                 horizontal-stretch: 0;
-                Rectangle {
-                    height: 32px;
-                    width: 32px;
-                    background: white;
-                    border-width: 2px;
-                    border-color: black;
-                }
             }
 
             Text {
                 text: name;
                 font-size: 24px;
                 font-weight: 600;
-                horizontal-alignment: left;
                 vertical-alignment: center;
-
                 color: black;
             }
 
@@ -46,9 +49,7 @@ export component FileCard inherits TouchArea {
             Text {
                 text: size;
                 font-size: 24px;
-                horizontal-alignment: left;
                 vertical-alignment: center;
-
                 color: rgba(0,0,0,0.5);
             }
         }

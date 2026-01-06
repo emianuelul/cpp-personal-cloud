@@ -59,10 +59,15 @@ void refresh_explorer(slint::ComponentHandle<MainWindow> ui_handle, std::shared_
                                    ? manager->get_curr_path() + f.name
                                    : manager->get_curr_path() + "/" + f.name;
 
+            std::string extension = std::filesystem::path(f.name).extension().string();
+
+            std::cout << "Extensie fisier: " << extension << "\n";
+
             files_model->push_back(File{
                 slint::SharedString(f.name),
                 slint::SharedString(path),
                 slint::SharedString(formatted),
+                slint::SharedString(extension),
             });
         }
 

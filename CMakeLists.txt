@@ -23,6 +23,9 @@ add_executable(server_exec
         include/cloud_file.h
         include/cloud_dir.h
         include/server_response.h
+        include/aes.c
+        include/aes.h
+        include/aes.hpp
 )
 
 target_include_directories(server_exec PRIVATE
@@ -37,12 +40,10 @@ add_executable(client_exec
         src/cli/client.cpp
         include/cloud_file.h
         src/cli/cli_headers/server_connection.h
-        src/srv/sv_headers/user_session.h
         include/cloud_dir.h
         include/server_response.h
-        src/srv/sv_headers/redundancy_manager.h
-        src/srv/sv_headers/db_manager.h
         src/cli/cli_headers/file_explorer_manager.h
+        src/srv/sv_headers/encryption_manager.h
 )
 
 slint_target_sources(client_exec src/cli/ui/slint_files/main_window.slint)
