@@ -12,6 +12,8 @@
 
 #define BUFFER_SIZE 8192
 #define PORT 8005
+#define IP "192.168.1.6"
+// #define IP "10.100.0.30"
 
 class ServerConnection {
 private:
@@ -291,9 +293,13 @@ public:
             }
 
             std::filesystem::path path(file_path);
+
+            std::string filename = path.filename().string();
+            std::replace(filename.begin(), filename.end(), ' ', '_');
+
             CloudFile fileToSend = {
                 std::filesystem::file_size(path),
-                path.filename().string(),
+                filename
             };
 
             json j = fileToSend;
@@ -398,6 +404,13 @@ public:
         if (name.length() > 24) {
             std::string err = "Name is too long\n";
             return {0, err, ""};
+        }
+
+        for (auto c : name) {
+            if (c == ' ' || c == '/' || c == '\\' || c == ':' || c == '@' || c == '!' || c == '?' || c == '#' || c == '<' || c == '>') {
+                std::string err = "Name can't contain special characters:\n <space> / \\ : @ ! ? # < >";
+                return {0, err, ""};
+            }
         }
 
         std::string cmd = "CREATEDIR " + name + " " + target_dir;

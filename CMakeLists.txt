@@ -4,15 +4,26 @@ project(cpp_personal_cloud)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(Slint_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/Slint/lib/cmake/Slint")
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/include/Slint/lib/cmake/Slint" ${CMAKE_MODULE_PATH})
+set(CMAKE_PREFIX_PATH "/opt/homebrew;${CMAKE_PREFIX_PATH}")
 
-find_package(Slint REQUIRED)
+set(SLINT_STYLE "native" CACHE STRING "Use native style" FORCE)
+
+include(FetchContent)
+FetchContent_Declare(
+        Slint
+        GIT_REPOSITORY https://github.com/slint-ui/slint.git
+        GIT_TAG v1.14.1
+        SOURCE_SUBDIR api/cpp
+)
+FetchContent_MakeAvailable(Slint)
+
 find_package(Threads REQUIRED)
 find_package(SQLite3 REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
+add_library(aes_lib
+        include/aes.c
+)
 
 # --- SERVER ---
 add_executable(server_exec
@@ -23,38 +34,56 @@ add_executable(server_exec
         include/cloud_file.h
         include/cloud_dir.h
         include/server_response.h
-        include/aes.c
-        include/aes.h
-        include/aes.hpp
 )
 
 target_include_directories(server_exec PRIVATE
         ${CMAKE_SOURCE_DIR}/include
 )
 
-target_link_libraries(server_exec PRIVATE Threads::Threads)
-target_link_libraries(server_exec PRIVATE SQLite::SQLite3)
+target_link_libraries(server_exec PRIVATE
+        Threads::Threads
+        SQLite::SQLite3
+        nlohmann_json::nlohmann_json
+        aes_lib
+)
 
 # --- CLIENT ---
 add_executable(client_exec
         src/cli/client.cpp
         include/cloud_file.h
         src/cli/cli_headers/server_connection.h
+        src/srv/sv_headers/user_session.h
         include/cloud_dir.h
         include/server_response.h
+        src/srv/sv_headers/redundancy_manager.h
+        src/srv/sv_headers/db_manager.h
         src/cli/cli_headers/file_explorer_manager.h
-        src/srv/sv_headers/encryption_manager.h
 )
 
 slint_target_sources(client_exec src/cli/ui/slint_files/main_window.slint)
 
 target_include_directories(client_exec PRIVATE
         ${CMAKE_SOURCE_DIR}/include
-        ${GTK3_INCLUDE_DIRS}
 )
+
+if(APPLE)
+    find_library(APPKIT_LIBRARY AppKit)
+    find_library(FOUNDATION_LIBRARY Foundation)
+    find_library(METAL_LIBRARY Metal)
+    find_library(QUARTZCORE_LIBRARY QuartzCore)
+endif()
 
 target_link_libraries(client_exec PRIVATE
         Slint::Slint
         Threads::Threads
-        ${GTK3_LIBRARIES}
+        nlohmann_json::nlohmann_json
 )
+
+if(APPLE)
+    target_link_libraries(client_exec PRIVATE
+            ${APPKIT_LIBRARY}
+            ${FOUNDATION_LIBRARY}
+            ${METAL_LIBRARY}
+            ${QUARTZCORE_LIBRARY}
+    )
+endif()
