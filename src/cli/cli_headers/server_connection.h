@@ -12,7 +12,7 @@
 
 #define BUFFER_SIZE 8192
 #define PORT 8005
-#define IP "192.168.1.6"
+#define IP "192.168.1.3"
 // #define IP "10.100.0.30"
 
 class ServerConnection {
@@ -406,8 +406,9 @@ public:
             return {0, err, ""};
         }
 
-        for (auto c : name) {
-            if (c == ' ' || c == '/' || c == '\\' || c == ':' || c == '@' || c == '!' || c == '?' || c == '#' || c == '<' || c == '>') {
+        for (auto c: name) {
+            if (c == ' ' || c == '/' || c == '\\' || c == ':' || c == '@' || c == '!' || c == '?' || c == '#' || c ==
+                '<' || c == '>') {
                 std::string err = "Name can't contain special characters:\n <space> / \\ : @ ! ? # < >";
                 return {0, err, ""};
             }

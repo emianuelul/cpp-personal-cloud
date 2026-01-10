@@ -37,10 +37,12 @@ public:
 
         sqlite3_stmt *stmt;
 
-        std::string sql = "DELETE FROM file_hashes WHERE username = ? AND filename = ?;";
+        int uid = get_user_id(user);
+
+        std::string sql = "DELETE FROM file_hashes WHERE user_id = ? AND filename = ?;";
         sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
 
-        sqlite3_bind_text(stmt, 1, user.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 1, uid);
         sqlite3_bind_text(stmt, 2, filename.c_str(), -1, SQLITE_TRANSIENT);
 
         if (sqlite3_step(stmt) != SQLITE_DONE) {
