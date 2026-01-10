@@ -7,6 +7,17 @@ export component FileMetadataSection inherits Rectangle {
     in-out property <string> file-name: "-";
     in-out property <string> path: "-";
     in-out property <string> size: "-";
+    in property <string> extension: "";
+
+    property <image> icon-default: @image-url("../icons/default.svg");
+    property <image> icon-image: @image-url("../icons/image.svg");
+    property <image> icon-md: @image-url("../icons/markdown.svg");
+    property <image> icon-pdf: @image-url("../icons/pdf.svg");
+    property <image> icon-video: @image-url("../icons/video.svg");
+    property <image> icon-zip: @image-url("../icons/zip.svg");
+
+    property <image> icon:
+        extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".webp" || extension == ".gif" || extension == ".svg" || extension == ".ico" ? icon-image : extension == ".md" || extension == ".txt" || extension == ".doc" || extension == ".docx" || extension == ".odt" ? icon-md : extension == ".pdf" ? icon-pdf : extension == ".mp4" || extension == ".mkv" || extension == ".avi" || extension == ".mov" || extension == ".wmv" || extension == ".flv" || extension == ".webm" ? icon-video : extension == ".zip" || extension == ".rar" || extension == ".7z" || extension == ".tar" || extension == ".gz" || extension == ".bz2" ? icon-zip : icon-default;
 
     background: white;
     border-radius: 16px;
@@ -37,12 +48,14 @@ export component FileMetadataSection inherits Rectangle {
 
             HorizontalLayout {
                 alignment: center;
-                Rectangle {
+
+                Image {
+                    source: icon;
                     height: 180px;
                     width: 180px;
-                    background: white;
-                    border-width: 2px;
-                    border-color: black;
+                    image-fit: contain;
+                    horizontal-alignment: center;
+                    horizontal-stretch: 0;
                 }
             }
 

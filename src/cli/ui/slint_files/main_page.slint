@@ -65,7 +65,7 @@ export component MainPage inherits Rectangle {
                     navigate-back();
                 }
 
-                update-metadata(name, path, size) => {
+                update-metadata(name, path, size, extension) => {
                     metadata-section.file-name = name;
                     metadata-section.path = path;
                     metadata-section.size = size;

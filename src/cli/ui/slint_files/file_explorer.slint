@@ -19,7 +19,7 @@ export struct DirEntry {
 
 
 export component FileExplorer inherits Rectangle {
-    in property <string> current-path: "/";
+    in property <string> current-path: "/asdfasdfasdfasdfasdfasdfasd";
     in property <[DirEntry]> subdirs: [
         { name: "Documents", path: "/Documents", file-count: 45 },
         { name: "Pictures", path: "/Pictures", file-count: 238 },
@@ -35,7 +35,7 @@ export component FileExplorer inherits Rectangle {
         { name: "budget_sheet.xlsx", path: "/home/user/finance", size: "892 KB" },
     ];
 
-    callback update-metadata(string, string, string);
+    callback update-metadata(string, string, string, string);
     callback navigate-to-dir(string);
     callback navigate-back();
 
@@ -129,7 +129,7 @@ export component FileExplorer inherits Rectangle {
                         extension: file.extension;
 
                         clicked => {
-                            update-metadata(self.name, self.path, self.size);
+                            update-metadata(self.name, self.path, self.size, self.extension);
                             debug(file.extension);
                         }
                     }
