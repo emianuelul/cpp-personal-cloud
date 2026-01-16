@@ -12,8 +12,8 @@
 
 #define BUFFER_SIZE 8192
 #define PORT 8005
-#define IP "192.168.1.3"
-// #define IP "10.100.0.30"
+
+#define IP "PLACE YOUR IP HERE"
 
 class ServerConnection {
 private:
